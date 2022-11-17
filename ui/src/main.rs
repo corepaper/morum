@@ -23,10 +23,23 @@ fn app() -> Html {
     html! {
         <>
             <Nav />
-            <BrowserRouter>
-                <Switch<Route> render={Switch::render(switch)} />
-            </BrowserRouter>
+            <div class="container mt-3">
+                <BrowserRouter>
+                    <Switch<Route> render={Switch::render(switch)} />
+                </BrowserRouter>
+            </div>
+            <Footer />
         </>
+    }
+}
+
+#[function_component(Footer)]
+fn footer() -> Html {
+    html! {
+        <footer class="text-center text-lg-start text-muted mt-3">
+            <a href="https://that.world/legal.txt">{"Legal notice"}</a>{". "}
+            {"Copyright (c) 2022 Wei Tang. morum is licensed under AGPL-3.0."}
+        </footer>
     }
 }
 
@@ -57,7 +70,7 @@ fn nav_login_link() -> Html {
 #[function_component(Login)]
 fn login() -> Html {
     html! {
-        <div class="container">
+        <>
             <div class="row">
                 <div class="col-md-10 offset-md-1">
                     <h3>
@@ -83,14 +96,14 @@ fn login() -> Html {
                     </form>
                 </div>
             </div>
-        </div>
+        </>
     }
 }
 
 #[function_component(Register)]
 fn register() -> Html {
     html! {
-        <div class="container">
+        <>
             <div class="row">
                 <div class="col-md-10 offset-md-1">
                     <h3>
@@ -116,7 +129,7 @@ fn register() -> Html {
                     </form>
                 </div>
             </div>
-        </div>
+        </>
     }
 }
 
