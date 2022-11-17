@@ -96,7 +96,7 @@ Methods using calculations from:
     $g: green($color);
     $b: blue($color);
     
-    @return (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+    @return calc((($r * 299) + ($g * 587) + ($b * 114)) / 1000);
 }
 
 @function color_difference_AERT($color1, $color2)
