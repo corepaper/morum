@@ -2,7 +2,21 @@
 name = "morum"
 version = "0.1.0"
 edition = "2021"
+authors = ["Wei Tang <wei@pacna.org"]
 license = "AGPL-3.0"
 description = "Matrix forum"
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+async-trait = "0.1"
+actix-web = "4"
+derive_more = "0.99"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+include_dir = "0.7"
+
+[build-dependencies]
+build-helper = "0.1.1"
+
+[workspace]
+members = ["ui"]
