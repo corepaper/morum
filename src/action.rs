@@ -13,15 +13,22 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Clone)]
+pub struct Config {
+    pub jwt_secret: jsonwebtoken::EncodingKey,
+}
+
 pub struct Context {
-    pub database: Arc<RwLock<Database>>,
+    pub database: RwLock<Database>,
+    pub config: Config,
 }
 
 impl Context {
-    pub fn new() -> Self {
+    pub fn dev() -> Self {
         Context {
-            database: Arc::new(RwLock::new(Default::default())),
+            database: RwLock::new(Default::default()),
+            config: Config {
+                jwt_secret: jsonwebtoken::EncodingKey::from_secret(b"devsecret"),
+            }
         }
     }
 }
@@ -34,6 +41,11 @@ pub trait Perform {
         &self,
         context: &Context,
     ) -> Result<Self::Response, Error>;
+}
+
+#[derive(Serialize)]
+pub struct AccessClaim {
+    pub username: String,
 }
 
 #[derive(Deserialize)]
@@ -55,6 +67,22 @@ impl Perform for Login {
         &self,
         context: &Context,
     ) -> Result<LoginResponse, Error> {
-        unimplemented!()
+        if self.username == "dev" && self.password == "dev" {
+            let claim = AccessClaim {
+                username: self.username.clone(),
+            };
+
+            let token = jsonwebtoken::encode(
+                &jsonwebtoken::Header::default(),
+                &claim,
+                &context.config.jwt_secret,
+            )?;
+
+            Ok(LoginResponse {
+                jwt: token,
+            })
+        } else {
+            Err(Error::InvalidLoginCredential)
+        }
     }
 }

@@ -1,6 +1,7 @@
 use actix_web::{App, HttpServer, HttpResponse, HttpResponseBuilder, web::{self, Data}, body::BoxBody};
 use serde::Deserialize;
 use morum::{Error, UserError, action::*};
+use std::sync::Arc;
 
 static UI_FILES: include_dir::Dir<'static> = include_dir::include_dir!("$OUT_DIR/dist");
 
@@ -43,10 +44,16 @@ where
 async fn main() -> Result<(), std::io::Error> {
     tracing_subscriber::fmt::init();
 
-    let context = Context::new();
+    let context = Arc::new(Context::dev());
 
     HttpServer::new(move || {
         let mut app = App::new();
+
+        app = app.service(
+            web::scope("/api/native")
+                .app_data(Data::new(context.clone()))
+                .route("/user/login", web::post().to(route_post::<Login>))
+        );
 
         for entry in UI_FILES.entries() {
             if let Some(file) = entry.as_file() {
@@ -54,11 +61,22 @@ async fn main() -> Result<(), std::io::Error> {
                 let path = file.path().to_string_lossy();
                 let content = file.contents().to_vec();
 
-                app = app.route(
-                    if path == "index.html" { "/" } else { &path },
-                    web::get().to(move || {
+                if path == "index.html" {
+                    app = app.default_service(web::get().to(move || {
+                        let content = content.clone();
+
+                        async move {
+                            let mut res = HttpResponse::Ok();
+                            res.content_type("text/html");
+
+                            res.body(content.clone())
+                        }
+                    }));
+                } else {
+                    app = app.route(&path, web::get().to(move || {
                         let ext = ext.clone();
                         let content = content.clone();
+
                         async move {
                             let mut res = HttpResponse::Ok();
 
@@ -72,16 +90,10 @@ async fn main() -> Result<(), std::io::Error> {
 
                             res.body(content.clone())
                         }
-                    })
-                );
+                    }));
+                }
             }
         }
-
-        app = app.service(
-            web::scope("/api/native")
-                .app_data(Data::new(context.clone()))
-                .route("/user/login", web::post().to(route_post::<Login>))
-        );
 
         app
     })

@@ -1,18 +1,36 @@
 #![recursion_limit = "1024"]
 
 use console_error_panic_hook::set_once as set_panic_hook;
-use wasm_bindgen::prelude::*;
-use web_sys::window;
+use yew::prelude::*;
+use yew::functional::*;
+use yew_router::prelude::*;
 
-fn start_app() {
-    let document = window().and_then(|win| win.document()).expect("Could not access document");
-    let body = document.body().expect("Could not access document.body");
-    let api_prefix = include_str!(concat!(env!("OUT_DIR"), "/api_prefix.txt"));
-    let text_node = document.create_text_node(&format!("Hello, world from Vanilla Rust! API prefix: {:?}", api_prefix));
-    body.append_child(text_node.as_ref()).expect("Failed to append text");
+#[derive(Debug, Clone, Copy, PartialEq, Routable)]
+enum Route {
+    #[at("/")]
+    Home,
+    #[not_found]
+    #[at("/404")]
+    NotFound,
+}
+
+#[function_component(Main)]
+fn app() -> Html {
+    html! {
+        <BrowserRouter>
+            <Switch<Route> render={Switch::render(switch)} />
+        </BrowserRouter>
+    }
+}
+
+fn switch(routes: &Route) -> Html {
+    match routes {
+        Route::Home => html! { <h1>{ "Home" }</h1> },
+        Route::NotFound => html! { <h1>{ "404" }</h1> },
+    }
 }
 
 fn main() {
     set_panic_hook();
-    start_app();
+    yew::start_app::<Main>();
 }

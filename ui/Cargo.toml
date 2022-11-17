@@ -9,6 +9,7 @@ console_error_panic_hook = "0.1"
 wasm-bindgen = "0.2"
 web-sys = "0.3"
 yew = "0.19"
+yew-router = "0.16"
 
 [build-dependencies]
 build-helper = "0.1.1"

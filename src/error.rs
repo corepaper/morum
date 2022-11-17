@@ -1,19 +1,30 @@
 use actix_web::{ResponseError, http::StatusCode, HttpResponse, body::BoxBody};
 use derive_more::Display;
+use thiserror::Error;
 
+#[derive(Error, Debug)]
 pub enum Error {
+    #[error("Json Web Token related errors")]
+    Jwt(#[from] jsonwebtoken::errors::Error),
 
+    #[error("Login credential is invalid")]
+    InvalidLoginCredential,
 }
 
-#[derive(Debug, Display)]
+#[derive(Error, Debug)]
 pub enum UserError {
-
+    #[error("Internal error")]
+    Internal,
+    #[error("Login credential is invalid")]
+    InvalidLoginCredential,
 }
 
 impl From<Error> for UserError {
     fn from(err: Error) -> Self {
         match err {
+            Error::Jwt(_) => Self::Internal,
 
+            Error::InvalidLoginCredential => Self::InvalidLoginCredential
         }
     }
 }
