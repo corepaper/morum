@@ -1,0 +1,44 @@
+.event-list {
+  margin-bottom: 1rem;
+}
+
+.event {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  background: $event-background;
+  @include anchor_with_contrast($background: $event-background);
+
+  .text-muted {
+    color: color_adjust_contrast_AERT($text-muted, $event-background);
+  }
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  h4 {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  blockquote {
+    margin-bottom: 0.5rem;
+
+    *:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  *:last-child {
+    margin-bottom: 0;
+  }
+}

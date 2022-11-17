@@ -1,0 +1,24 @@
+$base-font-size: 1rem;
+
+$navbar-light-color: color_adjust_contrast_AERT($gray-500, white);
+$navbar-light-active-color: color_adjust_contrast_AERT($black, white);
+
+$nav-tabs-background: #ddd;
+$link-color: color_adjust_contrast_AERT(#0044ff, white);
+
+$progress-bar-bg: $link-color;
+$pre-background: $gray-200;
+
+$event-background: $gray-100;
+
+$font_family_monospace: monospace;
+
+@mixin anchor_with_contrast($background: $white) {
+  a {
+    color: color_adjust_contrast_AERT($link-color, $background);
+  }
+
+  a:hover {
+    color: color_adjust_contrast_AERT($link-hover-color, $background);
+  }
+}

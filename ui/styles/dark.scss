@@ -1,0 +1,202 @@
+$primary-dark: darken($primary, 10);
+$success-dark: #2bb34b;
+$danger-dark: #ff3e3e;
+$muted-dark: $gray-400;
+$link-dark: lighten($primary, 10);
+$darker: darken($gray-900, 6);
+$border: $gray-700;
+
+body {
+  background: $gray-900;
+  color: $gray-100;
+}
+
+.event {
+  background: $darker;
+  color: $white;
+
+  a:not(.btn) {
+    color: $link-dark;
+  }
+}
+
+a {
+  color: $link-dark;
+}
+
+h3, h4 {
+  border-bottom-color: $gray-700;
+}
+
+pre {
+  color: $white;
+  background: $darker;
+}
+
+code {
+  color: $white;
+}
+
+.text-success {
+  // Whose brilliant idea was it to make the text- classes !important in
+  // bootstrap?
+  color: $success-dark !important;
+}
+
+.text-danger {
+  color: $danger-dark !important;
+}
+
+.text-muted {
+  color: $muted-dark !important;
+}
+
+.alert-info {
+  background-color: darken(#d1ecf1, 20);
+  border-color: darken(#bee5eb, 10);
+  color: black;
+
+  a:not(.btn) {
+    color: darken($primary, 20);
+  }
+}
+
+.alert-success {
+  background-color: darken(#d4edda, 20);
+  border-color: darken(#c3e6cb, 10);
+  color: $black;
+}
+
+.alert-danger {
+  background-color: darken(#f8d7da, 12);
+  border-color: darken(#f5c6cb, 10);
+  color: $black;
+
+  a:not(.btn) {
+    color: darken($primary, 15);
+  }
+}
+
+.alert-warning {
+  background-color: darken(#fff3cd, 8);
+  border-color: darken(#ffeeba, 10);
+  color: $black;
+
+  a:not(.btn) {
+    color: darken($primary, 15);
+  }
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="email"].form-control,
+textarea,
+textarea.form-control,
+select.form-control:not([multiple]),
+.form-control {
+  background: $darker;
+  color: $white;
+  border-color: $border;
+
+  &:active, &:focus {
+    background: $gray-900;
+    color: $white;
+  }
+
+  &[disabled], &[readonly] {
+    background: $gray-900;
+    color: $gray-400;
+  }
+}
+
+.btn {
+  &.btn-default {
+    background: $gray-900;
+    color: $white;
+    border-color: $border;
+
+    &:hover {
+      background: $darker;
+      color: $white;
+    }
+  }
+
+  &.btn-link {
+    color: $link-dark;
+  }
+
+  &.btn-primary,
+  &.btn-success,
+  &.btn-danger {
+    border-color: $darker;
+  }
+}
+
+.table,
+.table tbody tr,
+.table tbody td,
+.table thead th {
+  background: $gray-800;
+}
+
+.table tbody td {
+  border: 1px solid $gray-900;
+}
+
+.navbar-light {
+  .navbar-brand,
+  .navbar-brand a,
+  .navbar-text,
+  .navbar-text a,
+  .navbar-text a:hover,
+  .navbar-text a:focus,
+  .navbar-brand a:hover,
+  .navbar-brand:hover {
+    color: $white;
+  }
+
+  .navbar-nav {
+    .nav-link {
+      // gray-600 is too dark and gray-500 is too light
+      color: lighten($gray-600, 5);
+
+      &:focus {
+        color: $gray-500;
+      }
+
+      &:hover {
+        color: $white;
+      }
+    }
+
+    .active .nav-link {
+      color: $white;
+    }
+  }
+}
+
+$headerbg: $darker;
+
+.header-extension {
+  background: $headerbg;
+}
+
+.header-tabbed {
+  border-color: $headerbg;
+
+  .nav {
+    .nav-item .nav-link.active,
+    .nav-item .nav-link:hover {
+      color: $white;
+      background: $headerbg;
+      border-color: $headerbg;
+    }
+
+    .nav-link {
+      color: $gray-400;
+    }
+  }
+}
+
+@import "highlight-dark";

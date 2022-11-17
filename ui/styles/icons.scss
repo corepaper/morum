@@ -1,0 +1,56 @@
+.icon {
+  display: inline-block;
+  line-height: .75em;
+
+  svg {
+    display: block;
+  }
+  
+  path {
+    fill: currentColor;
+  }
+
+  width: 1.1em;
+  vertical-align: -0.2em;
+
+  .btn & {
+    vertical-align: -0.3em;
+  }
+
+  &.sm {
+    width: 0.9em;
+    vertical-align: -0.2em;
+  }
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(1turn);
+  }
+}
+
+.icon-spin {
+  animation: fa-spin 2s infinite linear;
+}
+
+.icon-caret-left,
+.icon-caret-right {
+  width: 0.5em;
+  vertical-align: -0.35em;
+
+  &.sm {
+    width: 0.4em;
+  }
+
+  .btn & {
+    margin-left: 0.2rem;
+  }
+}
+
+.icon-times {
+  width: 0.8em;
+  vertical-align: -0.25em;
+}

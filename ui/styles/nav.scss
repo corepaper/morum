@@ -1,0 +1,176 @@
+.navbar {
+  flex-wrap: wrap;
+
+  .navbar-nav {
+    flex-grow: 1;
+    flex-wrap: nowrap;
+
+    @include media-breakpoint-down(xs) {
+      flex-direction: row !important;
+
+      .nav-link {
+        padding: 0 0.5rem;
+
+        &:first-child {
+          padding-left: 0;
+        }
+      }
+    }
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+  }
+
+  .navbar-text {
+    color: $black;
+
+    @include media-breakpoint-down(md) {
+      padding: 0;
+    }
+  }
+}
+
+.navbar-light .navbar-brand {
+  a {
+    text-decoration: none;
+    color: $black;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .icon {
+    position: relative;
+    top: 1px;
+  }
+}
+
+.nav-tabs {
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 3px $nav-tabs-background solid;
+
+  .nav-link {
+    padding: 0 1rem;
+    border-radius: 0;
+    border: none;
+    color: color_adjust_contrast_AERT($gray-600, white);
+    cursor: pointer;
+
+    &.active, &.active:hover {
+      color: black;
+      background: $nav-tabs-background;
+    }
+
+    &[disabled], &[disabled]:hover {
+      color: $gray-800;
+      cursor: not-allowed;
+      background: transparent;
+    }
+  }
+}
+
+.header-tabbed {
+  border-bottom: 3px solid $nav-tabs-background;
+  margin-bottom: 1rem;
+
+  .container, .container-fluid {
+    display: flex;
+    flex-wrap: wrap;
+
+    @include media-breakpoint-down(sm) {
+      flex-direction: column;
+    }
+  }
+
+  &.vertical {
+    align-items: inherit;
+    flex-direction: column;
+  }
+
+  h2 {
+    display: inline;
+    margin: 0;
+    padding-right: 1rem;
+  }
+
+  .nav {
+    border: none;
+    margin: 0;
+    flex-grow: 1;
+    display: inline-flex;
+    flex-wrap: nowrap;
+    padding: 0;
+
+    li {
+      align-self: flex-end;
+    }
+
+    .nav-item:hover {
+      background: $nav-tabs-background;
+      a {
+        color: black;
+      }
+    }
+
+    .nav-text {
+      padding: 0 1rem;
+      margin-right: 1rem;
+
+      &.vis-private {
+        border-bottom: 3px solid $danger;
+        margin-bottom: -3px;
+      }
+
+      &.vis-unlisted {
+        border-bottom: 3px solid $info;
+        margin-bottom: -3px;
+      }
+
+      &:hover {
+        background: transparent;
+      }
+
+      @include media-breakpoint-down(sm) {
+        display: none;
+      }
+    }
+
+    @include media-breakpoint-down(sm) {
+      flex-wrap: wrap;
+
+      li {
+        align-self: flex-start;
+        margin: 0 -1rem;
+        width: 100vw;
+      }
+
+      .nav-item.back-button {
+        margin-left: -8px;
+      }
+    }
+  }
+
+  form {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  button.nav-link {
+    background: inherit;
+  }
+
+  @include media-breakpoint-down(xs) {
+    & .nav-tabs {
+      padding-left: 0;
+    }
+  }
+}
+
+.header-extension {
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  background: $nav-tabs-background;
+}

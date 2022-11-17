@@ -1,0 +1,3 @@
+[submodule "ui/css/bootstrap"]
+	path = ui/styles/bootstrap
+	url = https://github.com/twbs/bootstrap
