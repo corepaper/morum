@@ -10,4 +10,6 @@ pub struct ClosedBetaUser {
 pub struct Config {
     pub jwt_secret: String,
     pub closed_beta_users: Vec<ClosedBetaUser>,
+    pub homeserver_url: String,
+    pub homeserver_name: String,
 }

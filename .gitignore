@@ -2,3 +2,4 @@ target/
 ui/dist
 shell.nix
 config.yaml
+appservice-registration.yaml
