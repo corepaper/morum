@@ -8,6 +8,7 @@ description = "Matrix forum"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
 async-trait = "0.1"
 actix-web = "4"
 actix-cors = "0.6"
@@ -19,6 +20,7 @@ jsonwebtoken = "8"
 thiserror = "1"
 matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk" }
 matrix-sdk-appservice = { git = "https://github.com/matrix-org/matrix-rust-sdk" }
+clap = { version = "4", features = ["derive"] }
 
 morum-base = { path = "base" }
 

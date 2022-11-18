@@ -1,40 +1,23 @@
-use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, ResponseError};
-use derive_more::Display;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Json Web Token related errors")]
     Jwt(#[from] jsonwebtoken::errors::Error),
+    #[error("IO error")]
+    Io(#[from] std::io::Error),
+    #[error("Yaml parse error")]
+    Yaml(#[from] serde_yaml::Error),
 
     #[error("Login credential is invalid")]
     InvalidLoginCredential,
 }
 
-#[derive(Error, Debug)]
-pub enum UserError {
-    #[error("Internal error")]
-    Internal,
-    #[error("Login credential is invalid")]
-    InvalidLoginCredential,
-}
-
-impl From<Error> for UserError {
-    fn from(err: Error) -> Self {
+impl From<Error> for std::io::Error {
+    fn from(err: Error) -> std::io::Error {
         match err {
-            Error::Jwt(_) => Self::Internal,
-
-            Error::InvalidLoginCredential => Self::InvalidLoginCredential,
+            Error::Io(err) => err,
+            err => std::io::Error::new(std::io::ErrorKind::Other, err.to_string()),
         }
-    }
-}
-
-impl ResponseError for UserError {
-    fn status_code(&self) -> StatusCode {
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::Ok().finish()
     }
 }

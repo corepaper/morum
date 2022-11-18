@@ -1,38 +1,9 @@
+use super::Context;
 use crate::error::Error;
 use async_trait::async_trait;
 use morum_base::params::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-
-#[derive(Default)]
-pub struct Database {
-    pub users: HashMap<String, User>,
-}
-
-pub struct User {
-    pub password: String,
-}
-
-pub struct Config {
-    pub jwt_secret: jsonwebtoken::EncodingKey,
-}
-
-pub struct Context {
-    pub database: RwLock<Database>,
-    pub config: Config,
-}
-
-impl Context {
-    pub fn dev() -> Self {
-        Context {
-            database: RwLock::new(Default::default()),
-            config: Config {
-                jwt_secret: jsonwebtoken::EncodingKey::from_secret(b"devsecret"),
-            },
-        }
-    }
-}
+use std::sync::Arc;
 
 #[async_trait]
 pub trait Perform {
@@ -41,7 +12,7 @@ pub trait Perform {
     async fn perform(&self, context: &Arc<Context>) -> Result<Self::Response, Error>;
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AccessClaim {
     pub username: String,
 }
@@ -59,7 +30,7 @@ impl Perform for Login {
             let token = jsonwebtoken::encode(
                 &jsonwebtoken::Header::default(),
                 &claim,
-                &context.config.jwt_secret,
+                &jsonwebtoken::EncodingKey::from_secret(context.config.jwt_secret.as_bytes()),
             )?;
 
             Ok(LoginResponse { jwt: token })
