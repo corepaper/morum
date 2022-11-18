@@ -2,6 +2,7 @@ use serde::{Serialize, Deserialize};
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use async_trait::async_trait;
+use morum_base::params::*;
 use crate::error::Error;
 
 #[derive(Default)]
@@ -39,7 +40,7 @@ pub trait Perform {
 
     async fn perform(
         &self,
-        context: &Context,
+        context: &Arc<Context>,
     ) -> Result<Self::Response, Error>;
 }
 
@@ -48,24 +49,13 @@ pub struct AccessClaim {
     pub username: String,
 }
 
-#[derive(Deserialize)]
-pub struct Login {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Serialize)]
-pub struct LoginResponse {
-    pub jwt: String,
-}
-
 #[async_trait]
 impl Perform for Login {
     type Response = LoginResponse;
 
     async fn perform(
         &self,
-        context: &Context,
+        context: &Arc<Context>,
     ) -> Result<LoginResponse, Error> {
         if self.username == "dev" && self.password == "dev" {
             let claim = AccessClaim {

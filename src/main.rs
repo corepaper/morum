@@ -1,13 +1,14 @@
 use actix_web::{App, HttpServer, HttpResponse, HttpResponseBuilder, web::{self, Data}, body::BoxBody};
 use serde::Deserialize;
 use morum::{Error, UserError, action::*};
+use morum_base::params::*;
 use std::sync::Arc;
 
 static UI_FILES: include_dir::Dir<'static> = include_dir::include_dir!("$OUT_DIR/dist");
 
 async fn perform<Request>(
     data: Request,
-    context: web::Data<Context>,
+    context: web::Data<Arc<Context>>,
 ) -> Result<HttpResponse, UserError>
 where
     Request: Perform,
@@ -22,7 +23,7 @@ where
 
 async fn route_get<'a, Data>(
     data: web::Query<Data>,
-    context: web::Data<Context>,
+    context: web::Data<Arc<Context>>,
 ) -> Result<HttpResponse, UserError>
 where
     Data: Deserialize<'a> + Send + 'static + Perform,
@@ -32,7 +33,7 @@ where
 
 async fn route_post<'a, Data>(
     data: web::Json<Data>,
-    context: web::Data<Context>,
+    context: web::Data<Arc<Context>>,
 ) -> Result<HttpResponse, UserError>
 where
     Data: Deserialize<'a> + Send + 'static + Perform,
@@ -47,7 +48,7 @@ async fn main() -> Result<(), std::io::Error> {
     let context = Arc::new(Context::dev());
 
     HttpServer::new(move || {
-        let mut app = App::new();
+        let mut app = App::new().wrap(actix_cors::Cors::permissive());
 
         app = app.service(
             web::scope("/api/native")

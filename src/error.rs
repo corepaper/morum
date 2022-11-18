@@ -31,10 +31,10 @@ impl From<Error> for UserError {
 
 impl ResponseError for UserError {
     fn status_code(&self) -> StatusCode {
-        unimplemented!()
+        StatusCode::INTERNAL_SERVER_ERROR
     }
 
     fn error_response(&self) -> HttpResponse<BoxBody> {
-        unimplemented!()
+        HttpResponse::Ok().finish()
     }
 }
