@@ -22,7 +22,20 @@ impl Perform for Login {
     type Response = LoginResponse;
 
     async fn perform(&self, context: &Arc<Context>) -> Result<LoginResponse, Error> {
-        if self.username == "dev" && self.password == "dev" {
+        let valid = {
+            let mut found = false;
+
+            for user in &context.config.closed_beta_users {
+                if self.username == user.username && self.password == user.password {
+                    found = true;
+                    break
+                }
+            }
+
+            found
+        };
+
+        if valid {
             let claim = AccessClaim {
                 username: self.username.clone(),
             };

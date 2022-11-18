@@ -4,28 +4,13 @@ use console_error_panic_hook::set_once as set_panic_hook;
 use gloo_net::http::Request;
 use gloo_storage::{LocalStorage, Storage as _};
 use morum_base::params;
-use serde::Serialize;
 use std::rc::Rc;
-use wasm_bindgen::{JsCast, UnwrapThrowExt};
-use web_sys::{Event, HtmlInputElement, InputEvent};
+use web_sys::{HtmlInputElement, InputEvent};
 use yew::functional::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 const API_PREFIX: &'static str = include_str!(concat!(env!("OUT_DIR"), "/api_prefix.txt"));
-
-#[derive(Debug, Clone, Copy, PartialEq, Routable)]
-enum Route {
-    #[at("/")]
-    Home,
-    #[at("/login")]
-    Login,
-    #[at("/register")]
-    Register,
-    #[not_found]
-    #[at("/404")]
-    NotFound,
-}
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum PersistedAction {
@@ -34,7 +19,7 @@ enum PersistedAction {
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 struct PersistedValue {
-    access_token: Option<String>,
+    pub access_token: Option<String>,
 }
 
 impl PersistedValue {
@@ -43,16 +28,12 @@ impl PersistedValue {
             access_token: LocalStorage::get("morum.access_token").ok(),
         }
     }
-
-    fn access_token(&self) -> Option<&str> {
-        self.access_token.as_deref()
-    }
 }
 
 impl Reducible for PersistedValue {
     type Action = PersistedAction;
 
-    fn reduce(mut self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         let mut persisted = self.as_ref().clone();
         match action {
             PersistedAction::SetAccessToken(new) => {
@@ -74,12 +55,22 @@ impl Reducible for PersistedValue {
 
 type Persisted = UseReducerHandle<PersistedValue>;
 
+#[derive(Debug, Clone, Copy, PartialEq, Routable)]
+enum Route {
+    #[at("/")]
+    Home,
+    #[at("/login")]
+    Login,
+    #[not_found]
+    #[at("/404")]
+    NotFound,
+}
+
 fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <h1>{ "Home" }</h1> },
         Route::NotFound => html! { <h1>{ "404" }</h1> },
         Route::Login => html! { <Login /> },
-        Route::Register => html! { <Register /> },
     }
 }
 
@@ -146,8 +137,6 @@ fn NavLoginLink() -> Html {
             <div class="login">
                 <span class="navbar-text">
                     <Link<Route> to={Route::Login}>{"Login"}</Link<Route>>
-                    {" -- "}
-                    <Link<Route> to={Route::Register}>{"Register"}</Link<Route>>
                 </span>
             </div>
         }
@@ -215,7 +204,6 @@ fn Login() -> Html {
                 <div class="col-md-10 offset-md-1">
                     <h3>
                         {"Log in to morum"}
-                        <small>{" or "}<Link<Route> to={Route::Register}>{"register"}</Link<Route>></small>
                     </h3>
                 </div>
             </div>
@@ -231,37 +219,6 @@ fn Login() -> Html {
                     </div>
                     <button class="btn btn-primary pull-right" {onclick}>
                         {"Log in"}
-                    </button>
-                </div>
-            </div>
-        </>
-    }
-}
-
-#[function_component]
-fn Register() -> Html {
-    html! {
-        <>
-            <div class="row">
-                <div class="col-md-10 offset-md-1">
-                    <h3>
-                        {"Register for morum"}
-                        <small>{" or "}<Link<Route> to={Route::Login}>{"Login"}</Link<Route>></small>
-                    </h3>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 offset-md-3">
-                    <div class="form-group">
-                        <label>{"Username"}</label>
-                        <input class="form-control" type="text" />
-                    </div>
-                    <div class="form-group">
-                        <label>{"Password"}</label>
-                        <input class="form-control" type="password" />
-                    </div>
-                    <button class="btn btn-primary pull-right">
-                        {"Register"}
                     </button>
                 </div>
             </div>
