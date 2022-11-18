@@ -1,16 +1,16 @@
 #![recursion_limit = "1024"]
 
+use console_error_panic_hook::set_once as set_panic_hook;
+use gloo_net::http::Request;
+use gloo_storage::{LocalStorage, Storage as _};
+use morum_base::params;
+use serde::Serialize;
+use std::rc::Rc;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
-use console_error_panic_hook::set_once as set_panic_hook;
-use yew::prelude::*;
 use yew::functional::*;
+use yew::prelude::*;
 use yew_router::prelude::*;
-use gloo_storage::{LocalStorage, Storage as _};
-use gloo_net::http::Request;
-use std::rc::Rc;
-use serde::Serialize;
-use morum_base::params;
 
 const API_PREFIX: &'static str = include_str!(concat!(env!("OUT_DIR"), "/api_prefix.txt"));
 
@@ -59,9 +59,12 @@ impl Reducible for PersistedValue {
                 persisted.access_token = new.clone();
                 match new {
                     Some(new) => {
-                        LocalStorage::set("morum.access_token", new).expect("set access token failed");
-                    },
-                    None => { LocalStorage::delete("morum.access_token"); },
+                        LocalStorage::set("morum.access_token", new)
+                            .expect("set access token failed");
+                    }
+                    None => {
+                        LocalStorage::delete("morum.access_token");
+                    }
                 }
             }
         }
@@ -191,10 +194,7 @@ fn Login() -> Html {
 
             yew::platform::spawn_local(async move {
                 let res = Request::post(&(API_PREFIX.to_owned() + "/api/native/user/login"))
-                    .json(&params::Login {
-                        username,
-                        password,
-                    })
+                    .json(&params::Login { username, password })
                     .unwrap()
                     .send()
                     .await

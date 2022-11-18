@@ -1,9 +1,9 @@
-use serde::{Serialize, Deserialize};
-use std::sync::{Arc, RwLock};
-use std::collections::HashMap;
+use crate::error::Error;
 use async_trait::async_trait;
 use morum_base::params::*;
-use crate::error::Error;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 #[derive(Default)]
 pub struct Database {
@@ -29,7 +29,7 @@ impl Context {
             database: RwLock::new(Default::default()),
             config: Config {
                 jwt_secret: jsonwebtoken::EncodingKey::from_secret(b"devsecret"),
-            }
+            },
         }
     }
 }
@@ -38,10 +38,7 @@ impl Context {
 pub trait Perform {
     type Response: Serialize + Send;
 
-    async fn perform(
-        &self,
-        context: &Arc<Context>,
-    ) -> Result<Self::Response, Error>;
+    async fn perform(&self, context: &Arc<Context>) -> Result<Self::Response, Error>;
 }
 
 #[derive(Serialize)]
@@ -53,10 +50,7 @@ pub struct AccessClaim {
 impl Perform for Login {
     type Response = LoginResponse;
 
-    async fn perform(
-        &self,
-        context: &Arc<Context>,
-    ) -> Result<LoginResponse, Error> {
+    async fn perform(&self, context: &Arc<Context>) -> Result<LoginResponse, Error> {
         if self.username == "dev" && self.password == "dev" {
             let claim = AccessClaim {
                 username: self.username.clone(),
@@ -68,9 +62,7 @@ impl Perform for Login {
                 &context.config.jwt_secret,
             )?;
 
-            Ok(LoginResponse {
-                jwt: token,
-            })
+            Ok(LoginResponse { jwt: token })
         } else {
             Err(Error::InvalidLoginCredential)
         }

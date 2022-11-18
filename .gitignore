@@ -1,2 +1,4 @@
 target/
 ui/dist
+shell.nix
+config.yaml

@@ -1,4 +1,4 @@
-use actix_web::{ResponseError, http::StatusCode, HttpResponse, body::BoxBody};
+use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, ResponseError};
 use derive_more::Display;
 use thiserror::Error;
 
@@ -24,7 +24,7 @@ impl From<Error> for UserError {
         match err {
             Error::Jwt(_) => Self::Internal,
 
-            Error::InvalidLoginCredential => Self::InvalidLoginCredential
+            Error::InvalidLoginCredential => Self::InvalidLoginCredential,
         }
     }
 }

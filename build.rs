@@ -5,16 +5,20 @@ fn get_wasm_workspace_root() -> PathBuf {
     let mut out_dir = build_helper::out_dir();
 
     loop {
-	match out_dir.parent() {
-	    Some(parent) if out_dir.ends_with("build") => return parent.to_path_buf(),
-	    _ =>
-		if !out_dir.pop() {
-		    break
-		},
-	}
+        match out_dir.parent() {
+            Some(parent) if out_dir.ends_with("build") => return parent.to_path_buf(),
+            _ => {
+                if !out_dir.pop() {
+                    break;
+                }
+            }
+        }
     }
 
-    panic!("Could not find target dir in: {}", build_helper::out_dir().display())
+    panic!(
+        "Could not find target dir in: {}",
+        build_helper::out_dir().display()
+    )
 }
 
 fn main() {
@@ -28,7 +32,11 @@ fn main() {
     std::fs::create_dir_all(dist_dir.clone()).unwrap();
 
     if std::env::var_os("SKIP_UI_BUILD").is_some() {
-        std::fs::write(dist_dir.clone().join("index.html"), "<p>UI build was skipped</p>").unwrap();
+        std::fs::write(
+            dist_dir.clone().join("index.html"),
+            "<p>UI build was skipped</p>",
+        )
+        .unwrap();
     } else {
         println!("cargo:rerun-if-changed=ui");
 

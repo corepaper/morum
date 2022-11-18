@@ -1,7 +1,11 @@
-use actix_web::{App, HttpServer, HttpResponse, HttpResponseBuilder, web::{self, Data}, body::BoxBody};
-use serde::Deserialize;
-use morum::{Error, UserError, action::*};
+use actix_web::{
+    body::BoxBody,
+    web::{self, Data},
+    App, HttpResponse, HttpResponseBuilder, HttpServer,
+};
+use morum::{action::*, Error, UserError};
 use morum_base::params::*;
+use serde::Deserialize;
 use std::sync::Arc;
 
 static UI_FILES: include_dir::Dir<'static> = include_dir::include_dir!("$OUT_DIR/dist");
@@ -53,7 +57,7 @@ async fn main() -> Result<(), std::io::Error> {
         app = app.service(
             web::scope("/api/native")
                 .app_data(Data::new(context.clone()))
-                .route("/user/login", web::post().to(route_post::<Login>))
+                .route("/user/login", web::post().to(route_post::<Login>)),
         );
 
         for entry in UI_FILES.entries() {
@@ -74,24 +78,35 @@ async fn main() -> Result<(), std::io::Error> {
                         }
                     }));
                 } else {
-                    app = app.route(&path, web::get().to(move || {
-                        let ext = ext.clone();
-                        let content = content.clone();
+                    app = app.route(
+                        &path,
+                        web::get().to(move || {
+                            let ext = ext.clone();
+                            let content = content.clone();
 
-                        async move {
-                            let mut res = HttpResponse::Ok();
+                            async move {
+                                let mut res = HttpResponse::Ok();
 
-                            match ext {
-                                Some("html") => { res.content_type("text/html"); }
-                                Some("css") => { res.content_type("text/css"); }
-                                Some("js") => { res.content_type("text/javascript"); }
-                                Some("wasm") => { res.content_type("application/wasm"); },
-                                _ => (),
+                                match ext {
+                                    Some("html") => {
+                                        res.content_type("text/html");
+                                    }
+                                    Some("css") => {
+                                        res.content_type("text/css");
+                                    }
+                                    Some("js") => {
+                                        res.content_type("text/javascript");
+                                    }
+                                    Some("wasm") => {
+                                        res.content_type("application/wasm");
+                                    }
+                                    _ => (),
+                                }
+
+                                res.body(content.clone())
                             }
-
-                            res.body(content.clone())
-                        }
-                    }));
+                        }),
+                    );
                 }
             }
         }

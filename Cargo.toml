@@ -17,6 +17,8 @@ tracing-subscriber = "0.3"
 include_dir = "0.7"
 jsonwebtoken = "8"
 thiserror = "1"
+matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk" }
+matrix-sdk-appservice = { git = "https://github.com/matrix-org/matrix-rust-sdk" }
 
 morum-base = { path = "base" }
 
