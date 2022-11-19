@@ -1288,10 +1288,12 @@ version = "0.1.0"
 dependencies = [
  "actix-cors",
  "actix-web",
+ "assign",
  "async-trait",
  "build-helper",
  "clap",
  "derive_more",
+ "http",
  "hyper",
  "include_dir",
  "jsonwebtoken",

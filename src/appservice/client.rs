@@ -1,7 +1,29 @@
 use crate::Error;
 use ruma::UserId;
 use ruma::api::{MatrixVersion, SendAccessToken, OutgoingRequest};
-use ruma::client::{ResponseResult, DefaultConstructibleHttpClient, HttpClientExt, http_client::HyperNativeTls};
+use ruma::client::{ResponseResult, ResponseError, DefaultConstructibleHttpClient, HttpClient, HttpClientExt, http_client::HyperNativeTls};
+
+fn add_user_id_to_query<C: HttpClient + ?Sized, R: OutgoingRequest>(
+    user_id: &UserId,
+) -> impl FnOnce(&mut http::Request<C::RequestBody>) -> Result<(), ResponseError<C, R>> + '_ {
+    use assign::assign;
+    use http::uri::Uri;
+    use ruma::serde::urlencoded;
+
+    move |http_request| {
+        let extra_params = urlencoded::to_string([("user_id", user_id)]).unwrap();
+        let uri = http_request.uri_mut();
+        let new_path_and_query = match uri.query() {
+            Some(params) => format!("{}?{params}&{extra_params}", uri.path()),
+            None => format!("{}?{extra_params}", uri.path()),
+        };
+        *uri = Uri::from_parts(assign!(uri.clone().into_parts(), {
+            path_and_query: Some(new_path_and_query.parse()?),
+        }))?;
+
+        Ok(())
+    }
+}
 
 #[derive(Debug)]
 pub struct Client {
@@ -63,12 +85,12 @@ impl Client {
     ) -> ResponseResult<HyperNativeTls, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
-        self.http.send_matrix_request_as(
+        self.http.send_customized_matrix_request(
             &self.homeserver_url,
             send_access_token,
             &self.supported_matrix_versions,
-            user_id,
-            request
+            request,
+            add_user_id_to_query::<HyperNativeTls, R>(user_id),
         ).await
     }
 }

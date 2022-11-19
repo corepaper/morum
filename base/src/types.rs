@@ -13,3 +13,10 @@ pub struct Category {
     pub topic: String,
     pub subcategories: Vec<Subcategory>,
 }
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct Post {
+    pub title: String,
+    pub topic: Option<String>,
+    pub id: usize,
+}

@@ -1,5 +1,4 @@
 mod client;
-mod category_event;
 
 use tracing::{debug, trace};
 use crate::{Config, Error};

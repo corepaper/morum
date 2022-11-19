@@ -1,7 +1,7 @@
 use super::Context;
 use crate::error::Error;
 use async_trait::async_trait;
-use morum_base::params::*;
+use morum_base::{params::*, types};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -65,10 +65,23 @@ impl Perform for Categories {
 }
 
 #[async_trait]
-impl Perform for Subcategory {
-    type Response = SubcategoryResponse;
+impl Perform for Posts {
+    type Response = PostsResponse;
 
-    async fn perform(&self, context: &Arc<Context>) -> Result<SubcategoryResponse, Error> {
-        Ok(SubcategoryResponse { })
+    async fn perform(&self, context: &Arc<Context>) -> Result<PostsResponse, Error> {
+        let rooms = context.appservice.valid_rooms().await?;
+        let mut posts = Vec::new();
+
+        for room in rooms {
+            if room.category == self.category_id {
+                posts.push(types::Post {
+                    title: room.title,
+                    topic: room.topic,
+                    id: room.post_id,
+                });
+            }
+        }
+
+        Ok(PostsResponse { posts })
     }
 }

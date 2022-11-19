@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::types::Category;
+use crate::types::{Category, Post};
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct Login {
@@ -21,11 +21,11 @@ pub struct CategoriesResponse {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
-pub struct Subcategory {
-    pub id: String,
+pub struct Posts {
+    pub category_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
-pub struct SubcategoryResponse {
-
+pub struct PostsResponse {
+    pub posts: Vec<Post>,
 }
