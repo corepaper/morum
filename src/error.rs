@@ -8,16 +8,18 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("Yaml parse error")]
     Yaml(#[from] serde_yaml::Error),
-    #[error("Appservice error")]
-    Appservice(#[from] matrix_sdk_appservice::Error),
+    // #[error("Appservice error")]
+    // Appservice(#[from] matrix_sdk_appservice::Error),
     #[error("Url parsing error")]
     UrlParse(#[from] url::ParseError),
-    #[error("Matrix error")]
-    Matrix(#[from] matrix_sdk::Error),
-    #[error("Matrix HTTP error")]
-    MatrixHttp(#[from] matrix_sdk::HttpError),
-    #[error("Matrix Id parsing error")]
-    MatrixIdParse(#[from] matrix_sdk_appservice::ruma::IdParseError),
+    #[error("Ruma client error")]
+    RumaClient(Box<dyn std::error::Error>),
+    // #[error("Matrix error")]
+    // Matrix(#[from] matrix_sdk::Error),
+    // #[error("Matrix HTTP error")]
+    // MatrixHttp(#[from] matrix_sdk::HttpError),
+    // #[error("Matrix Id parsing error")]
+    // MatrixIdParse(#[from] matrix_sdk_appservice::ruma::IdParseError),
 
     #[error("Login credential is invalid")]
     InvalidLoginCredential,
@@ -26,6 +28,12 @@ pub enum Error {
 impl From<std::convert::Infallible> for Error {
     fn from(err: std::convert::Infallible) -> Error {
         match err { }
+    }
+}
+
+impl<R: std::error::Error + 'static> From<ruma::client::Error<hyper::Error, R>> for Error {
+    fn from(err: ruma::client::Error<hyper::Error, R>) -> Self {
+        Self::RumaClient(Box::new(err))
     }
 }
 

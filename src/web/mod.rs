@@ -4,7 +4,7 @@ mod user_error;
 pub use self::action::Perform;
 pub use self::user_error::UserError;
 
-use crate::{Config, Error};
+use crate::{Config, AppService, Error};
 use actix_web::{
     web::{self, Data},
     App, HttpResponse, HttpServer,
@@ -15,6 +15,7 @@ use std::sync::Arc;
 
 pub struct Context {
     pub config: Config,
+    pub appservice: AppService,
 }
 
 static UI_FILES: include_dir::Dir<'static> = include_dir::include_dir!("$OUT_DIR/dist");
@@ -54,8 +55,8 @@ where
     perform::<Data>(data.0, context).await
 }
 
-pub async fn start(config: Config) -> Result<(), Error> {
-    let context = Arc::new(Context { config });
+pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> {
+    let context = Arc::new(Context { config, appservice });
 
     HttpServer::new(move || {
         let mut app = App::new().wrap(actix_cors::Cors::permissive());

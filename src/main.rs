@@ -6,8 +6,6 @@ use std::fs;
 struct Args {
     #[arg(short, long)]
     config: String,
-    #[arg(short, long)]
-    appservice_registration: String,
 }
 
 async fn run() -> Result<(), Error> {
@@ -16,8 +14,9 @@ async fn run() -> Result<(), Error> {
 
     let config: Config = serde_yaml::from_str(&fs::read_to_string(args.config)?)?;
 
-    // morum::web::start(config.clone()).await?;
-    morum::appservice::start(config.clone(), args.appservice_registration).await?;
+    let appservice = morum::appservice::start(config.clone()).await?;
+
+    morum::web::start(config.clone(), appservice).await?;
 
     Ok(())
 }
