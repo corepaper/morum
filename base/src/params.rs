@@ -52,3 +52,17 @@ pub struct NewComment {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct NewCommentResponse { }
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct NewPost {
+    pub access_token: String,
+    pub title: String,
+    pub topic: String,
+    pub markdown: String,
+    pub category_id: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct NewPostResponse {
+    pub post_id: usize,
+}

@@ -140,13 +140,18 @@ impl AppService {
         Ok(rooms)
     }
 
-    pub async fn set_category(&self, room_id: &str, category: Option<String>) -> Result<(), Error> {
+    pub async fn set_category(&self, room_alias_id: &str, category: Option<String>) -> Result<(), Error> {
+        let request = ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
+        let response = self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
+
+        let room_id = response.room_id;
+
         let content = MorumCategoryEventContent {
             category,
         };
 
         let mut request = ruma::api::client::state::send_state_event::v3::Request::new(
-            room_id.try_into()?,
+            &room_id,
             &EmptyStateKey,
             &content,
         )?;
@@ -238,6 +243,20 @@ impl AppService {
         )?;
         let response = self.0.send_request_as(&user_id, request).await?;
 
+        Ok(())
+    }
+
+    pub async fn create_room(&self, room_alias_localpart: &str, name: &str, topic: &str) -> Result<(), Error> {
+        use ruma::api::client::room::create_room::v3::RoomPreset;
+
+        let mut request = ruma::api::client::room::create_room::v3::Request::new();
+        request.room_alias_name = Some(room_alias_localpart);
+        request.name = Some(name);
+        request.topic = Some(topic);
+        request.preset = Some(RoomPreset::PublicChat);
+        request.is_direct = false;
+
+        self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
         Ok(())
     }
 }

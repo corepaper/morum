@@ -169,3 +169,36 @@ impl Perform for NewComment {
         Ok(NewCommentResponse { })
     }
 }
+
+#[async_trait]
+impl Perform for NewPost {
+    type Response = NewPostResponse;
+
+    async fn perform(&self, context: &Arc<Context>) -> Result<NewPostResponse, Error> {
+        let claim = jsonwebtoken::decode::<AccessClaim>(
+            &self.access_token,
+            &jsonwebtoken::DecodingKey::from_secret(context.config.jwt_secret.as_bytes()),
+            &Default::default(),
+        )?;
+
+        let localpart = format!("forum_user_{}", claim.claims.username);
+
+        let rooms = context.appservice.valid_rooms().await?;
+        let room_id = rooms.iter()
+            .map(|r| r.post_id)
+            .reduce(|acc, r| if acc >= r { acc } else { r })
+            .unwrap_or(1) + 1;
+
+        let room_alias_localpart = format!("forum_post_{}", room_id);
+        context.appservice.create_room(&room_alias_localpart, &self.title, &self.topic).await?;
+
+        let room_alias = format!("#forum_post_{}:corepaper.org", room_id);
+        context.appservice.set_category(&room_alias, self.category_id.clone()).await?;
+
+        context.appservice.send_message(&localpart, &room_alias, &self.markdown).await?;
+
+        Ok(NewPostResponse {
+            post_id: room_id,
+        })
+    }
+}
