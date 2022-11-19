@@ -12,9 +12,10 @@ pub trait Perform {
     async fn perform(&self, context: &Arc<Context>) -> Result<Self::Response, Error>;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AccessClaim {
     pub username: String,
+    pub exp: u64,
 }
 
 #[async_trait]
@@ -36,8 +37,11 @@ impl Perform for Login {
         };
 
         if valid {
+            use std::time::{SystemTime, UNIX_EPOCH};
+
             let claim = AccessClaim {
                 username: self.username.clone(),
+                exp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 604800,
             };
 
             let token = jsonwebtoken::encode(
@@ -129,5 +133,39 @@ impl Perform for Post {
         }
 
         Ok(PostResponse { comments, post })
+    }
+}
+
+#[async_trait]
+impl Perform for NewComment {
+    type Response = NewCommentResponse;
+
+    async fn perform(&self, context: &Arc<Context>) -> Result<NewCommentResponse, Error> {
+        let claim = jsonwebtoken::decode::<AccessClaim>(
+            &self.access_token,
+            &jsonwebtoken::DecodingKey::from_secret(context.config.jwt_secret.as_bytes()),
+            &Default::default(),
+        )?;
+
+        let localpart = format!("forum_user_{}", claim.claims.username);
+
+        let rooms = context.appservice.valid_rooms().await?;
+        let mut post = None;
+        for room in rooms {
+            if room.post_id == self.post_id {
+                post = Some(types::Post {
+                    title: room.title,
+                    topic: room.topic,
+                    id: room.post_id,
+                });
+            }
+        }
+        let post = post.ok_or(Error::UnknownPost)?;
+
+        let room_alias = format!("#forum_post_{}:corepaper.org", post.id);
+
+        context.appservice.send_message(&localpart, &room_alias, &self.markdown).await?;
+
+        Ok(NewCommentResponse { })
     }
 }

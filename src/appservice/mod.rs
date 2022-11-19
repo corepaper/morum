@@ -194,7 +194,51 @@ impl AppService {
             }
         }
 
+        messages.reverse();
+
         Ok(messages)
+    }
+
+    pub async fn send_message(&self, localpart: &str, room_alias_id: &str, markdown: &str) -> Result<(), Error> {
+        use ruma::TransactionId;
+        use ruma::events::room::message::{
+            MessageType, MessageFormat, FormattedBody, RoomMessageEventContent, TextMessageEventContent, sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
+        };
+
+        let request = ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
+        let response = self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
+
+        let room_id = response.room_id;
+
+        self.ensure_registered(localpart).await?;
+
+        let user_id = ruma::UserId::parse(&format!("@{}:corepaper.org", localpart))?;
+
+        let request = ruma::api::client::membership::join_room_by_id::v3::Request::new(&room_id);
+        let response = self.0.send_request_as(&user_id, request).await?;
+
+        let mut html_body = String::new();
+
+        pulldown_cmark::html::push_html(&mut html_body, pulldown_cmark::Parser::new(markdown));
+        let mut formatted = FormattedBody::html(html_body);
+        formatted.sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
+
+        let mut event_content = TextMessageEventContent::plain(markdown);
+        event_content.formatted = Some(formatted);
+
+        let message = RoomMessageEventContent::new(
+            MessageType::Text(event_content)
+        );
+
+        let transaction_id = TransactionId::new();
+        let request = ruma::api::client::message::send_message_event::v3::Request::new(
+            &room_id,
+            &transaction_id,
+            &message
+        )?;
+        let response = self.0.send_request_as(&user_id, request).await?;
+
+        Ok(())
     }
 }
 
@@ -202,7 +246,6 @@ pub async fn start(config: Config) -> Result<AppService, Error> {
     let appservice = AppService::new(config.homeserver_url, config.homeserver_access_token).await?;
 
     appservice.ensure_registered("forum").await?;
-    appservice.messages("#forum_post_1:corepaper.org").await?;
 
     Ok(appservice)
 }

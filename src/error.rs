@@ -22,6 +22,8 @@ pub enum Error {
     // MatrixHttp(#[from] matrix_sdk::HttpError),
     #[error("Matrix Id parsing error")]
     MatrixIdParse(#[from] ruma::IdParseError),
+    #[error("System time error")]
+    SystemTime(#[from] std::time::SystemTimeError),
 
     #[error("Login credential is invalid")]
     InvalidLoginCredential,

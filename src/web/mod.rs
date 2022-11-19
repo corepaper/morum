@@ -67,6 +67,7 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
                 .route("/categories", web::get().to(route_get::<params::Categories>))
                 .route("/posts", web::get().to(route_get::<params::Posts>))
                 .route("/post", web::get().to(route_get::<params::Post>))
+                .route("/new_comment", web::post().to(route_post::<params::NewComment>))
                 .route("/user/login", web::post().to(route_post::<params::Login>)),
         );
 

@@ -24,7 +24,7 @@ enum Route {
     #[at("/category/:category_id")]
     Posts { category_id: String },
     #[at("/post/:post_id")]
-    Post { post_id: String },
+    Post { post_id: usize },
     #[not_found]
     #[at("/404")]
     NotFound,

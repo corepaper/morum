@@ -29,7 +29,7 @@ pub fn PostList(props: &PostListProps) -> Html {
                 { posts.iter().map(|post| html! {
                     <div class="row">
                         <div class="card">
-                            <h5 class="card-title"><Link<Route> to={Route::Post { post_id: format!("{}", post.id) }}>{post.title.clone()}</Link<Route>></h5>
+                            <h5 class="card-title"><Link<Route> to={Route::Post { post_id: post.id }}>{post.title.clone()}</Link<Route>></h5>
                             if let Some(topic) = post.topic.clone() {
                                 <p class="card-text">{topic}</p>
                             }

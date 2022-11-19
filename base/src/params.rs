@@ -42,3 +42,13 @@ pub struct PostResponse {
     pub post: types::Post,
     pub comments: Vec<types::Comment>,
 }
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct NewComment {
+    pub access_token: String,
+    pub post_id: usize,
+    pub markdown: String,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct NewCommentResponse { }
