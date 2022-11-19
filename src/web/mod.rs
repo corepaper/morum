@@ -64,6 +64,7 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
         app = app.service(
             web::scope("/api/native")
                 .app_data(Data::new(context.clone()))
+                .route("/categories", web::get().to(route_get::<Categories>))
                 .route("/user/login", web::post().to(route_post::<Login>)),
         );
 

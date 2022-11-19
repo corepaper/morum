@@ -33,6 +33,7 @@ body {
   font-size: $base-font-size;
   padding-bottom: 1rem;
   text-align: initial;
+  max-width: 47rem;
 }
 
 @include media-breakpoint-down(md) {

@@ -52,3 +52,14 @@ impl Perform for Login {
         }
     }
 }
+
+#[async_trait]
+impl Perform for Categories {
+    type Response = CategoriesResponse;
+
+    async fn perform(&self, context: &Arc<Context>) -> Result<CategoriesResponse, Error> {
+        Ok(CategoriesResponse {
+            categories: context.config.categories.clone()
+        })
+    }
+}

@@ -3,7 +3,7 @@
 use console_error_panic_hook::set_once as set_panic_hook;
 use gloo_net::http::Request;
 use gloo_storage::{LocalStorage, Storage as _};
-use morum_base::params;
+use morum_base::{params, types};
 use std::rc::Rc;
 use web_sys::{HtmlInputElement, InputEvent};
 use yew::functional::*;
@@ -68,7 +68,7 @@ enum Route {
 
 fn switch(routes: Route) -> Html {
     match routes {
-        Route::Home => html! { <h1>{ "Home" }</h1> },
+        Route::Home => html! { <Categories /> },
         Route::NotFound => html! { <h1>{ "404" }</h1> },
         Route::Login => html! { <Login /> },
     }
@@ -82,7 +82,7 @@ fn App() -> Html {
         <BrowserRouter>
             <ContextProvider<Persisted> context={persisted.clone()}>
                 <Nav />
-                <div class="container mt-3">
+                <div class="container m-3">
                     <Switch<Route> render={switch} />
                 </div>
                 <Footer />
@@ -223,6 +223,78 @@ fn Login() -> Html {
                 </div>
             </div>
         </>
+    }
+}
+
+#[function_component]
+fn Categories() -> Html {
+    let persisted = use_context::<Persisted>().expect("no ctx found");
+    let navigator = use_navigator().unwrap();
+
+    let categories = use_state::<Option<Vec<types::Category>>, _>(|| None);
+
+    if let Some(categories) = (*categories).clone() {
+        html! {
+            <>
+                { categories.iter().map(|c| html! { <Category category={c.clone()} /> }).collect::<Html>() }
+            </>
+        }
+    } else {
+        let categories = categories.clone();
+        yew::platform::spawn_local(async move {
+            let res = Request::get(&(API_PREFIX.to_owned() + "/api/native/categories"))
+                .send()
+                .await
+                .unwrap()
+                .json::<params::CategoriesResponse>()
+                .await
+                .unwrap();
+
+            categories.set(Some(res.categories));
+        });
+
+        html! {
+            <p>{"Loading ..."}</p>
+        }
+    }
+}
+
+#[derive(Properties, PartialEq)]
+struct CategoryProps {
+    pub category: types::Category
+}
+
+#[function_component]
+fn Category(props: &CategoryProps) -> Html {
+    html! {
+        <>
+            <div class="row mb-1">
+                <h4>{props.category.title.clone()}<small>{props.category.topic.clone()}</small></h4>
+            </div>
+            <div class="row mb-3">
+                { props.category.subcategories.iter()
+                      .map(|s| html! { <Subcategory subcategory={s.clone()} /> }).collect::<Html>() }
+            </div>
+        </>
+    }
+}
+
+#[derive(Properties, PartialEq)]
+struct SubcategoryProps {
+    pub subcategory: types::Subcategory
+}
+
+#[function_component]
+fn Subcategory(props: &SubcategoryProps) -> Html {
+    html! {
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><a href="#">{props.subcategory.title.clone()}</a></h5>
+                    <p class="card-text">{props.subcategory.topic.clone()}</p>
+                </div>
+            </div>
+        </div>
     }
 }
 
