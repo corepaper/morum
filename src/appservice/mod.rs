@@ -23,6 +23,12 @@ pub struct Room {
     pub room_id: String,
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct Message {
+    pub html: String,
+    pub sender: String,
+}
+
 #[derive(Debug)]
 pub struct AppService(self::client::Client);
 
@@ -145,8 +151,50 @@ impl AppService {
             &content,
         )?;
 
-        let response = self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
+        self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
         Ok(())
+    }
+
+    pub async fn messages(&self, room_alias_id: &str) -> Result<Vec<Message>, Error> {
+        use ruma::events::{AnyTimelineEvent, AnyMessageLikeEvent, MessageLikeEvent};
+        use ruma::events::room::message::{
+            MessageType, MessageFormat, sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
+        };
+
+        let mut messages = Vec::new();
+
+        let request = ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
+        let response = self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
+
+        let mut request = ruma::api::client::message::get_message_events::v3::Request::backward(&response.room_id);
+        request.limit = js_int::UInt::MAX;
+        let types_filter = ["m.room.message".to_string()];
+        request.filter.types = Some(&types_filter);
+        let response = self.0.send_request_as("@forum:corepaper.org".try_into()?, request).await?;
+
+        for message_raw in response.chunk {
+            let message = message_raw.deserialize()?;
+
+            if let AnyTimelineEvent::MessageLike(AnyMessageLikeEvent::RoomMessage(MessageLikeEvent::Original(message))) = message {
+                let sender = message.sender;
+
+                if let MessageType::Text(message) = message.content.msgtype {
+                    if let Some(mut message) = message.formatted {
+                        if message.format == MessageFormat::Html {
+                            message.sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
+                            let html = message.body;
+
+                            messages.push(Message {
+                                sender: sender.as_str().to_owned(),
+                                html,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(messages)
     }
 }
 
@@ -154,6 +202,7 @@ pub async fn start(config: Config) -> Result<AppService, Error> {
     let appservice = AppService::new(config.homeserver_url, config.homeserver_access_token).await?;
 
     appservice.ensure_registered("forum").await?;
+    appservice.messages("#forum_post_1:corepaper.org").await?;
 
     Ok(appservice)
 }

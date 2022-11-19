@@ -20,3 +20,9 @@ pub struct Post {
     pub topic: Option<String>,
     pub id: usize,
 }
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct Comment {
+    pub html: String,
+    pub sender: String,
+}

@@ -69,6 +69,21 @@ impl Perform for Posts {
     type Response = PostsResponse;
 
     async fn perform(&self, context: &Arc<Context>) -> Result<PostsResponse, Error> {
+        let mut category = None;
+        let mut subcategory = None;
+
+        for c in &context.config.categories {
+            for sc in &c.subcategories {
+                if sc.id == self.category_id {
+                    category = Some(c.clone());
+                    subcategory = Some(sc.clone());
+                }
+            }
+        }
+
+        let category = category.ok_or(Error::UnknownCategory)?;
+        let subcategory = subcategory.ok_or(Error::UnknownCategory)?;
+
         let rooms = context.appservice.valid_rooms().await?;
         let mut posts = Vec::new();
 
@@ -82,6 +97,37 @@ impl Perform for Posts {
             }
         }
 
-        Ok(PostsResponse { posts })
+        Ok(PostsResponse { posts, category, subcategory })
+    }
+}
+
+#[async_trait]
+impl Perform for Post {
+    type Response = PostResponse;
+
+    async fn perform(&self, context: &Arc<Context>) -> Result<PostResponse, Error> {
+        let rooms = context.appservice.valid_rooms().await?;
+        let mut post = None;
+        for room in rooms {
+            if room.post_id == self.id {
+                post = Some(types::Post {
+                    title: room.title,
+                    topic: room.topic,
+                    id: room.post_id,
+                });
+            }
+        }
+        let post = post.ok_or(Error::UnknownPost)?;
+
+        let messages = context.appservice.messages(&format!("#forum_post_{}:corepaper.org", post.id)).await?;
+        let mut comments = Vec::new();
+        for message in messages {
+            comments.push(types::Comment {
+                html: message.html,
+                sender: message.sender,
+            });
+        }
+
+        Ok(PostResponse { comments, post })
     }
 }

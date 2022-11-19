@@ -29,7 +29,7 @@ pub fn PostList(props: &PostListProps) -> Html {
                 { posts.iter().map(|post| html! {
                     <div class="row">
                         <div class="card">
-                            <h5 class="card-title"><a href="#">{post.title.clone()}</a></h5>
+                            <h5 class="card-title"><Link<Route> to={Route::Post { post_id: format!("{}", post.id) }}>{post.title.clone()}</Link<Route>></h5>
                             if let Some(topic) = post.topic.clone() {
                                 <p class="card-text">{topic}</p>
                             }
@@ -44,40 +44,6 @@ pub fn PostList(props: &PostListProps) -> Html {
         let props = props.clone();
 
         yew::platform::spawn_local(async move {
-            let res = Request::get(&(API_PREFIX.to_owned() + "/api/native/categories"))
-                .send()
-                .await
-                .unwrap()
-                .json::<params::CategoriesResponse>()
-                .await
-                .unwrap();
-
-            let mut category = None;
-            let mut subcategory = None;
-
-            for c in res.categories {
-                for sc in c.subcategories.clone() {
-                    if sc.id == Some(props.category_id.clone()) || (sc.id == None && props.category_id == "uncategorized") {
-                        category = Some(c.clone());
-                        subcategory = Some(sc.clone());
-                    }
-                }
-            }
-
-            let category = if let Some(category) = category {
-                category
-            } else {
-                navigator.push(&Route::Home);
-                return;
-            };
-
-            let subcategory = if let Some(subcategory) = subcategory {
-                subcategory
-            } else {
-                navigator.push(&Route::Home);
-                return;
-            };
-
             let res = Request::get(&(API_PREFIX.to_owned() + &format!("/api/native/posts?category_id={}", props.category_id)))
                 .send()
                 .await
@@ -86,7 +52,7 @@ pub fn PostList(props: &PostListProps) -> Html {
                 .await
                 .unwrap();
 
-            fetched.set(Some((category, subcategory, res.posts)));
+            fetched.set(Some((res.category, res.subcategory, res.posts)));
         });
 
         html! {

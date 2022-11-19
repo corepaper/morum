@@ -9,7 +9,7 @@ use actix_web::{
     web::{self, Data},
     App, HttpResponse, HttpServer,
 };
-use morum_base::params::*;
+use morum_base::params;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -64,9 +64,10 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
         app = app.service(
             web::scope("/api/native")
                 .app_data(Data::new(context.clone()))
-                .route("/categories", web::get().to(route_get::<Categories>))
-                .route("/posts", web::get().to(route_get::<Posts>))
-                .route("/user/login", web::post().to(route_post::<Login>)),
+                .route("/categories", web::get().to(route_get::<params::Categories>))
+                .route("/posts", web::get().to(route_get::<params::Posts>))
+                .route("/post", web::get().to(route_get::<params::Post>))
+                .route("/user/login", web::post().to(route_post::<params::Login>)),
         );
 
         for entry in UI_FILES.entries() {

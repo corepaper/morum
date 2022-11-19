@@ -25,6 +25,10 @@ pub enum Error {
 
     #[error("Login credential is invalid")]
     InvalidLoginCredential,
+    #[error("Unknown category")]
+    UnknownCategory,
+    #[error("Unknown post")]
+    UnknownPost,
 }
 
 impl From<std::convert::Infallible> for Error {

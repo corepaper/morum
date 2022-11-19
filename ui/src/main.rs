@@ -23,6 +23,8 @@ enum Route {
     Login,
     #[at("/category/:category_id")]
     Posts { category_id: String },
+    #[at("/post/:post_id")]
+    Post { post_id: String },
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -34,6 +36,7 @@ fn switch(routes: Route) -> Html {
         Route::NotFound => html! { <h1>{ "404" }</h1> },
         Route::Login => html! { <login::Login /> },
         Route::Posts { category_id } => html! { <post_list::PostList category_id={category_id} /> },
+        Route::Post { post_id } => html! { <post::Post id={post_id} /> },
     }
 }
 
