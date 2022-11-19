@@ -46,7 +46,7 @@ impl Perform for Login {
                 &jsonwebtoken::EncodingKey::from_secret(context.config.jwt_secret.as_bytes()),
             )?;
 
-            Ok(LoginResponse { jwt: token })
+            Ok(LoginResponse { access_token: token })
         } else {
             Err(Error::InvalidLoginCredential)
         }
@@ -61,5 +61,14 @@ impl Perform for Categories {
         Ok(CategoriesResponse {
             categories: context.config.categories.clone()
         })
+    }
+}
+
+#[async_trait]
+impl Perform for Subcategory {
+    type Response = SubcategoryResponse;
+
+    async fn perform(&self, context: &Arc<Context>) -> Result<SubcategoryResponse, Error> {
+        Ok(SubcategoryResponse { })
     }
 }

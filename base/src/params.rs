@@ -9,7 +9,7 @@ pub struct Login {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct LoginResponse {
-    pub jwt: String,
+    pub access_token: String,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
@@ -18,4 +18,14 @@ pub struct Categories { }
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct CategoriesResponse {
     pub categories: Vec<Category>,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct Subcategory {
+    pub id: String,
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+pub struct SubcategoryResponse {
+
 }

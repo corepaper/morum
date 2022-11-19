@@ -9,6 +9,7 @@ description = "Matrix forum"
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
+serde_json = "1"
 async-trait = "0.1"
 actix-web = "4"
 actix-cors = "0.6"
@@ -19,9 +20,11 @@ include_dir = "0.7"
 jsonwebtoken = "8"
 thiserror = "1"
 ruma = { version = "0.7", features = ["full", "client-hyper-native-tls"] }
+ruma-macros = "0.10"
 clap = { version = "4", features = ["derive"] }
 url = "2"
 hyper = "0.14"
+regex = "1"
 
 morum-base = { path = "base" }
 

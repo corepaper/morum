@@ -1,7 +1,9 @@
 use crate::Error;
+use ruma::UserId;
 use ruma::api::{MatrixVersion, SendAccessToken, OutgoingRequest};
 use ruma::client::{ResponseResult, DefaultConstructibleHttpClient, HttpClientExt, http_client::HyperNativeTls};
 
+#[derive(Debug)]
 pub struct Client {
     homeserver_url: String,
     access_token: String,
@@ -50,6 +52,22 @@ impl Client {
             &self.homeserver_url,
             send_access_token,
             &self.supported_matrix_versions,
+            request
+        ).await
+    }
+
+    pub async fn send_request_as<R: OutgoingRequest>(
+        &self,
+        user_id: &UserId,
+        request: R,
+    ) -> ResponseResult<HyperNativeTls, R> {
+        let send_access_token = SendAccessToken::IfRequired(&self.access_token);
+
+        self.http.send_matrix_request_as(
+            &self.homeserver_url,
+            send_access_token,
+            &self.supported_matrix_versions,
+            user_id,
             request
         ).await
     }

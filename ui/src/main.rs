@@ -192,7 +192,7 @@ fn Login() -> Html {
                     .await
                     .unwrap();
 
-                persisted.dispatch(PersistedAction::SetAccessToken(Some(res.jwt)));
+                persisted.dispatch(PersistedAction::SetAccessToken(Some(res.access_token)));
                 navigator.push(&Route::Home);
             });
         })

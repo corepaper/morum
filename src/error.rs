@@ -8,6 +8,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("Yaml parse error")]
     Yaml(#[from] serde_yaml::Error),
+    #[error("Json parse error")]
+    Json(#[from] serde_json::Error),
     // #[error("Appservice error")]
     // Appservice(#[from] matrix_sdk_appservice::Error),
     #[error("Url parsing error")]
@@ -18,8 +20,8 @@ pub enum Error {
     // Matrix(#[from] matrix_sdk::Error),
     // #[error("Matrix HTTP error")]
     // MatrixHttp(#[from] matrix_sdk::HttpError),
-    // #[error("Matrix Id parsing error")]
-    // MatrixIdParse(#[from] matrix_sdk_appservice::ruma::IdParseError),
+    #[error("Matrix Id parsing error")]
+    MatrixIdParse(#[from] ruma::IdParseError),
 
     #[error("Login credential is invalid")]
     InvalidLoginCredential,
