@@ -150,6 +150,10 @@ impl Perform for NewComment {
     type Response = NewCommentResponse;
 
     async fn perform(&self, context: &Arc<Context>) -> Result<NewCommentResponse, Error> {
+        if &self.markdown == "" {
+            return Err(Error::BlankContent);
+        }
+
         let claim = jsonwebtoken::decode::<AccessClaim>(
             &self.access_token,
             &jsonwebtoken::DecodingKey::from_secret(context.config.jwt_secret.as_bytes()),
@@ -187,6 +191,18 @@ impl Perform for NewPost {
     type Response = NewPostResponse;
 
     async fn perform(&self, context: &Arc<Context>) -> Result<NewPostResponse, Error> {
+        if &self.title == "" {
+            return Err(Error::BlankTitle);
+        }
+
+        if &self.topic == "" {
+            return Err(Error::BlankTopic);
+        }
+
+        if &self.markdown == "" {
+            return Err(Error::BlankContent);
+        }
+
         let claim = jsonwebtoken::decode::<AccessClaim>(
             &self.access_token,
             &jsonwebtoken::DecodingKey::from_secret(context.config.jwt_secret.as_bytes()),

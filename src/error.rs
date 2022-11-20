@@ -31,6 +31,12 @@ pub enum Error {
     UnknownCategory,
     #[error("Unknown post")]
     UnknownPost,
+    #[error("Blank title")]
+    BlankTitle,
+    #[error("Blank topic")]
+    BlankTopic,
+    #[error("Blank content")]
+    BlankContent,
 }
 
 impl From<std::convert::Infallible> for Error {
