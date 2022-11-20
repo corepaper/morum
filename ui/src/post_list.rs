@@ -1,10 +1,10 @@
+use crate::{Persisted, Route, API_PREFIX};
 use gloo_net::http::Request;
 use morum_base::{params, types};
+use web_sys::{HtmlInputElement, HtmlTextAreaElement};
 use yew::functional::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
-use web_sys::{HtmlInputElement, HtmlTextAreaElement};
-use crate::{Route, Persisted, API_PREFIX};
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct PostListProps {
@@ -16,7 +16,8 @@ pub fn PostList(props: &PostListProps) -> Html {
     let persisted = use_context::<Persisted>().expect("no ctx found");
     let navigator = use_navigator().unwrap();
 
-    let fetched = use_state::<Option<(types::Category, types::Subcategory, Vec<types::Post>)>, _>(|| None);
+    let fetched =
+        use_state::<Option<(types::Category, types::Subcategory, Vec<types::Post>)>, _>(|| None);
 
     if let Some((category, subcategory, posts)) = (*fetched).clone() {
         let reset = {
@@ -56,13 +57,16 @@ pub fn PostList(props: &PostListProps) -> Html {
         let props = props.clone();
 
         yew::platform::spawn_local(async move {
-            let res = Request::get(&(API_PREFIX.to_owned() + &format!("/api/native/posts?category_id={}", props.category_id)))
-                .send()
-                .await
-                .unwrap()
-                .json::<params::PostsResponse>()
-                .await
-                .unwrap();
+            let res = Request::get(
+                &(API_PREFIX.to_owned()
+                    + &format!("/api/native/posts?category_id={}", props.category_id)),
+            )
+            .send()
+            .await
+            .unwrap()
+            .json::<params::PostsResponse>()
+            .await
+            .unwrap();
 
             fetched.set(Some((res.category, res.subcategory, res.posts)));
         });
@@ -134,7 +138,11 @@ pub fn NewPost(props: &NewPostProps) -> Html {
                         title: (*title).clone(),
                         topic: (*topic).clone(),
                         markdown: (*markdown).clone(),
-                        category_id: if &category_id == "uncategorized" { None } else { Some(category_id.clone()) },
+                        category_id: if &category_id == "uncategorized" {
+                            None
+                        } else {
+                            Some(category_id.clone())
+                        },
                     })
                     .unwrap()
                     .send()

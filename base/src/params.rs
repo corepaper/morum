@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::types;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct Login {
@@ -13,7 +13,7 @@ pub struct LoginResponse {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
-pub struct Categories { }
+pub struct Categories {}
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct CategoriesResponse {
@@ -51,7 +51,7 @@ pub struct NewComment {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
-pub struct NewCommentResponse { }
+pub struct NewCommentResponse {}
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct NewPost {

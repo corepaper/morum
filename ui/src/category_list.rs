@@ -1,9 +1,9 @@
+use crate::{Persisted, Route, API_PREFIX};
 use gloo_net::http::Request;
 use morum_base::{params, types};
 use yew::functional::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
-use crate::{Route, Persisted, API_PREFIX};
 
 #[function_component]
 pub fn CategoryList() -> Html {
@@ -41,7 +41,7 @@ pub fn CategoryList() -> Html {
 
 #[derive(Properties, PartialEq)]
 struct CategoryListCategoryProps {
-    pub category: types::Category
+    pub category: types::Category,
 }
 
 #[function_component]
@@ -61,7 +61,7 @@ fn CategoryListCategory(props: &CategoryListCategoryProps) -> Html {
 
 #[derive(Properties, PartialEq)]
 struct CategoryListSubcategoryProps {
-    pub subcategory: types::Subcategory
+    pub subcategory: types::Subcategory,
 }
 
 #[function_component]

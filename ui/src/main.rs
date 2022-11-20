@@ -1,10 +1,10 @@
 #![recursion_limit = "1024"]
 
-mod persisted;
-mod login;
 mod category_list;
-mod post_list;
+mod login;
+mod persisted;
 mod post;
+mod post_list;
 
 pub use crate::persisted::*;
 

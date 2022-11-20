@@ -35,7 +35,7 @@ pub enum Error {
 
 impl From<std::convert::Infallible> for Error {
     fn from(err: std::convert::Infallible) -> Error {
-        match err { }
+        match err {}
     }
 }
 

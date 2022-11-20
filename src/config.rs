@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use morum_base::types::Category;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct ClosedBetaUser {

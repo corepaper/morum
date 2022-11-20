@@ -1,7 +1,10 @@
 use crate::Error;
+use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken};
+use ruma::client::{
+    http_client::HyperNativeTls, DefaultConstructibleHttpClient, HttpClient, HttpClientExt,
+    ResponseError, ResponseResult,
+};
 use ruma::UserId;
-use ruma::api::{MatrixVersion, SendAccessToken, OutgoingRequest};
-use ruma::client::{ResponseResult, ResponseError, DefaultConstructibleHttpClient, HttpClient, HttpClientExt, http_client::HyperNativeTls};
 
 fn add_user_id_to_query<C: HttpClient + ?Sized, R: OutgoingRequest>(
     user_id: &UserId,
@@ -56,26 +59,36 @@ impl Client {
         })
     }
 
-    pub async fn send_request<R: OutgoingRequest>(&self, request: R) -> ResponseResult<HyperNativeTls, R> {
+    pub async fn send_request<R: OutgoingRequest>(
+        &self,
+        request: R,
+    ) -> ResponseResult<HyperNativeTls, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
-        self.http.send_matrix_request(
-            &self.homeserver_url,
-            send_access_token,
-            &self.supported_matrix_versions,
-            request
-        ).await
+        self.http
+            .send_matrix_request(
+                &self.homeserver_url,
+                send_access_token,
+                &self.supported_matrix_versions,
+                request,
+            )
+            .await
     }
 
-    pub async fn send_request_force_auth<R: OutgoingRequest>(&self, request: R) -> ResponseResult<HyperNativeTls, R> {
+    pub async fn send_request_force_auth<R: OutgoingRequest>(
+        &self,
+        request: R,
+    ) -> ResponseResult<HyperNativeTls, R> {
         let send_access_token = SendAccessToken::Always(&self.access_token);
 
-        self.http.send_matrix_request(
-            &self.homeserver_url,
-            send_access_token,
-            &self.supported_matrix_versions,
-            request
-        ).await
+        self.http
+            .send_matrix_request(
+                &self.homeserver_url,
+                send_access_token,
+                &self.supported_matrix_versions,
+                request,
+            )
+            .await
     }
 
     pub async fn send_request_as<R: OutgoingRequest>(
@@ -85,12 +98,14 @@ impl Client {
     ) -> ResponseResult<HyperNativeTls, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
-        self.http.send_customized_matrix_request(
-            &self.homeserver_url,
-            send_access_token,
-            &self.supported_matrix_versions,
-            request,
-            add_user_id_to_query::<HyperNativeTls, R>(user_id),
-        ).await
+        self.http
+            .send_customized_matrix_request(
+                &self.homeserver_url,
+                send_access_token,
+                &self.supported_matrix_versions,
+                request,
+                add_user_id_to_query::<HyperNativeTls, R>(user_id),
+            )
+            .await
     }
 }

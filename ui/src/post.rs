@@ -1,10 +1,10 @@
+use crate::{Persisted, Route, API_PREFIX};
 use gloo_net::http::Request;
 use morum_base::{params, types};
+use web_sys::HtmlTextAreaElement;
 use yew::functional::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
-use web_sys::HtmlTextAreaElement;
-use crate::{Route, Persisted, API_PREFIX};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -69,13 +69,15 @@ pub fn Post(props: &PostProps) -> Html {
         let props = props.clone();
 
         yew::platform::spawn_local(async move {
-            let res = Request::get(&(API_PREFIX.to_owned() + &format!("/api/native/post?id={}", props.id)))
-                .send()
-                .await
-                .unwrap()
-                .json::<params::PostResponse>()
-                .await
-                .unwrap();
+            let res = Request::get(
+                &(API_PREFIX.to_owned() + &format!("/api/native/post?id={}", props.id)),
+            )
+            .send()
+            .await
+            .unwrap()
+            .json::<params::PostResponse>()
+            .await
+            .unwrap();
 
             fetched.set(Some((res.post, res.comments)));
         });

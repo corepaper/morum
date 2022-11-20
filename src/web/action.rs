@@ -29,7 +29,7 @@ impl Perform for Login {
             for user in &context.config.closed_beta_users {
                 if self.username == user.username && self.password == user.password {
                     found = true;
-                    break
+                    break;
                 }
             }
 
@@ -50,7 +50,9 @@ impl Perform for Login {
                 &jsonwebtoken::EncodingKey::from_secret(context.config.jwt_secret.as_bytes()),
             )?;
 
-            Ok(LoginResponse { access_token: token })
+            Ok(LoginResponse {
+                access_token: token,
+            })
         } else {
             Err(Error::InvalidLoginCredential)
         }
@@ -63,7 +65,7 @@ impl Perform for Categories {
 
     async fn perform(&self, context: &Arc<Context>) -> Result<CategoriesResponse, Error> {
         Ok(CategoriesResponse {
-            categories: context.config.categories.clone()
+            categories: context.config.categories.clone(),
         })
     }
 }
@@ -101,7 +103,11 @@ impl Perform for Posts {
             }
         }
 
-        Ok(PostsResponse { posts, category, subcategory })
+        Ok(PostsResponse {
+            posts,
+            category,
+            subcategory,
+        })
     }
 }
 
@@ -123,7 +129,10 @@ impl Perform for Post {
         }
         let post = post.ok_or(Error::UnknownPost)?;
 
-        let messages = context.appservice.messages(&format!("#forum_post_{}:corepaper.org", post.id)).await?;
+        let messages = context
+            .appservice
+            .messages(&format!("#forum_post_{}:corepaper.org", post.id))
+            .await?;
         let mut comments = Vec::new();
         for message in messages {
             comments.push(types::Comment {
@@ -164,9 +173,12 @@ impl Perform for NewComment {
 
         let room_alias = format!("#forum_post_{}:corepaper.org", post.id);
 
-        context.appservice.send_message(&localpart, &room_alias, &self.markdown).await?;
+        context
+            .appservice
+            .send_message(&localpart, &room_alias, &self.markdown)
+            .await?;
 
-        Ok(NewCommentResponse { })
+        Ok(NewCommentResponse {})
     }
 }
 
@@ -184,21 +196,30 @@ impl Perform for NewPost {
         let localpart = format!("forum_user_{}", claim.claims.username);
 
         let rooms = context.appservice.valid_rooms().await?;
-        let room_id = rooms.iter()
+        let room_id = rooms
+            .iter()
             .map(|r| r.post_id)
             .reduce(|acc, r| if acc >= r { acc } else { r })
-            .unwrap_or(1) + 1;
+            .unwrap_or(1)
+            + 1;
 
         let room_alias_localpart = format!("forum_post_{}", room_id);
-        context.appservice.create_room(&room_alias_localpart, &self.title, &self.topic).await?;
+        context
+            .appservice
+            .create_room(&room_alias_localpart, &self.title, &self.topic)
+            .await?;
 
         let room_alias = format!("#forum_post_{}:corepaper.org", room_id);
-        context.appservice.set_category(&room_alias, self.category_id.clone()).await?;
+        context
+            .appservice
+            .set_category(&room_alias, self.category_id.clone())
+            .await?;
 
-        context.appservice.send_message(&localpart, &room_alias, &self.markdown).await?;
+        context
+            .appservice
+            .send_message(&localpart, &room_alias, &self.markdown)
+            .await?;
 
-        Ok(NewPostResponse {
-            post_id: room_id,
-        })
+        Ok(NewPostResponse { post_id: room_id })
     }
 }

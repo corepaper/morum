@@ -4,7 +4,7 @@ mod user_error;
 pub use self::action::Perform;
 pub use self::user_error::UserError;
 
-use crate::{Config, AppService, Error};
+use crate::{AppService, Config, Error};
 use actix_web::{
     web::{self, Data},
     App, HttpResponse, HttpServer,
@@ -64,10 +64,16 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
         app = app.service(
             web::scope("/api/native")
                 .app_data(Data::new(context.clone()))
-                .route("/categories", web::get().to(route_get::<params::Categories>))
+                .route(
+                    "/categories",
+                    web::get().to(route_get::<params::Categories>),
+                )
                 .route("/posts", web::get().to(route_get::<params::Posts>))
                 .route("/post", web::get().to(route_get::<params::Post>))
-                .route("/new_comment", web::post().to(route_post::<params::NewComment>))
+                .route(
+                    "/new_comment",
+                    web::post().to(route_post::<params::NewComment>),
+                )
                 .route("/new_post", web::post().to(route_post::<params::NewPost>))
                 .route("/user/login", web::post().to(route_post::<params::Login>)),
         );
