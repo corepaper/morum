@@ -47,7 +47,7 @@ pub fn PostList(props: &PostListProps) -> Html {
                 }).collect::<Html>() }
 
                 <div class="row">
-                    if (*persisted).access_token.is_some() { <NewPost category_id={props.category_id.clone()} reset={reset} /> }
+                    <NewPost category_id={props.category_id.clone()} reset={reset} />
                 </div>
             </>
         }
@@ -82,6 +82,7 @@ pub struct NewPostProps {
 #[function_component]
 pub fn NewPost(props: &NewPostProps) -> Html {
     let persisted = use_context::<Persisted>().expect("no ctx found");
+    let disabled = (*persisted).access_token.is_none();
 
     let title = use_state(|| "".to_owned());
     let ontitle = {
@@ -152,17 +153,17 @@ pub fn NewPost(props: &NewPostProps) -> Html {
         <div class="col-12">
             <div class="form-group">
                 <label for="title">{"Title"}</label>
-                <input type="text" class="form-control" id="title" oninput={ontitle} />
+                <input type="text" class="form-control" id="title" oninput={ontitle} disabled={disabled} />
             </div>
             <div class="form-group">
                 <label for="topic">{"Topic"}</label>
-                <input type="text" class="form-control" id="topic" oninput={ontopic} />
+                <input type="text" class="form-control" id="topic" oninput={ontopic} disabled={disabled} />
             </div>
             <div class="form-group">
                 <label for="content">{"Content"}</label>
-                <textarea class="form-control" id="content" rows="5" oninput={onmarkdown}></textarea>
+                <textarea class="form-control" id="content" rows="5" oninput={onmarkdown} disabled={disabled}></textarea>
             </div>
-            <button type="button" class="btn btn-primary pull-right" onclick={onclick}>{"Submit"}</button>
+            <button type="button" class="btn btn-primary pull-right" onclick={onclick} disabled={disabled}>{"Submit"}</button>
         </div>
     }
 }

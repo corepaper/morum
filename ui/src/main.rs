@@ -61,8 +61,10 @@ fn App() -> Html {
 fn Footer() -> Html {
     html! {
         <footer class="text-center text-lg-start text-muted mt-3">
-            <a href="https://that.world/legal.txt">{"Legal notice"}</a>{". "}
-            {"Copyright (c) 2022 Wei Tang. morum is licensed under AGPL-3.0."}
+            <a href="https://that.world/legal.txt" target="_blank">{"Legal notice"}</a>{". "}
+            {"Copyright (c) 2022 Wei Tang. morum is licensed under "}
+            <a href="https://github.com/corepaper/morum" target="_blank">{"AGPL-3.0"}</a>
+            {"."}
         </footer>
     }
 }

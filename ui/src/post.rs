@@ -60,7 +60,7 @@ pub fn Post(props: &PostProps) -> Html {
                 }).collect::<Html>() }
 
                 <div class="row">
-                    if (*persisted).access_token.is_some() { <NewComment id={props.id.clone()} reset={reset} /> }
+                    <NewComment id={props.id.clone()} reset={reset} />
                 </div>
             </>
         }
@@ -95,6 +95,7 @@ pub struct NewCommentProps {
 #[function_component]
 pub fn NewComment(props: &NewCommentProps) -> Html {
     let persisted = use_context::<Persisted>().expect("no ctx found");
+    let disabled = (*persisted).access_token.is_none();
 
     let markdown = use_state(|| "".to_owned());
     let onmarkdown = {
@@ -140,9 +141,9 @@ pub fn NewComment(props: &NewCommentProps) -> Html {
         <div class="col-12">
             <div class="form-group">
                 <label for="new-comment">{"New comment"}</label>
-                <textarea class="form-control" id="new-comment" rows="5" oninput={onmarkdown}></textarea>
+                <textarea class="form-control" id="new-comment" rows="5" oninput={onmarkdown} disabled={disabled}></textarea>
             </div>
-            <button type="button" class="btn btn-primary pull-right" onclick={onclick}>{"Submit"}</button>
+            <button type="button" class="btn btn-primary pull-right" onclick={onclick} disabled={disabled}>{"Submit"}</button>
         </div>
     }
 }
