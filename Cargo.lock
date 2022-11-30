@@ -344,7 +344,7 @@ dependencies = [
 [[package]]
 name = "east"
 version = "0.3.0-dev"
-source = "git+https://github.com/corepaper/east#9ba4baeb1a53339484318da20a24ac1dc7904e7a"
+source = "git+https://github.com/corepaper/east#7fba90575cdc70d5ad143999f701364a8bbcf9d4"
 dependencies = [
  "east-macro",
  "serde",
@@ -357,7 +357,7 @@ dependencies = [
 [[package]]
 name = "east-build"
 version = "0.1.0"
-source = "git+https://github.com/corepaper/east#9ba4baeb1a53339484318da20a24ac1dc7904e7a"
+source = "git+https://github.com/corepaper/east#7fba90575cdc70d5ad143999f701364a8bbcf9d4"
 dependencies = [
  "axum",
  "build-helper",
@@ -369,7 +369,7 @@ dependencies = [
 [[package]]
 name = "east-build-helper"
 version = "0.1.0"
-source = "git+https://github.com/corepaper/east#9ba4baeb1a53339484318da20a24ac1dc7904e7a"
+source = "git+https://github.com/corepaper/east#7fba90575cdc70d5ad143999f701364a8bbcf9d4"
 dependencies = [
  "build-helper",
 ]
@@ -377,7 +377,7 @@ dependencies = [
 [[package]]
 name = "east-macro"
 version = "0.3.0-dev"
-source = "git+https://github.com/corepaper/east#9ba4baeb1a53339484318da20a24ac1dc7904e7a"
+source = "git+https://github.com/corepaper/east#7fba90575cdc70d5ad143999f701364a8bbcf9d4"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -2773,9 +2773,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize_derive"
-version = "1.3.2"
+version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
+checksum = "44bf07cb3e50ea2003396695d58bf46bc9887a1f362260446fad6bc4e79bd36c"
 dependencies = [
  "proc-macro2",
  "quote",
