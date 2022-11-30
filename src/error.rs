@@ -24,6 +24,8 @@ pub enum Error {
     MatrixIdParse(#[from] ruma::IdParseError),
     #[error("System time error")]
     SystemTime(#[from] std::time::SystemTimeError),
+    #[error("Hyper error")]
+    Hyper(#[from] hyper::Error),
 
     #[error("Login credential is invalid")]
     InvalidLoginCredential,

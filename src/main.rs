@@ -16,6 +16,8 @@ async fn run() -> Result<(), Error> {
 
     let appservice = morum::appservice::start(config.clone()).await?;
 
+    morum::web::start().await?;
+
     Ok(())
 }
 

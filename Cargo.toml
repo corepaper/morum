@@ -27,11 +27,16 @@ http = "0.2"
 assign = "1"
 js_int = "0.2"
 pulldown-cmark = "0.9"
+include_dir = "0.7"
+axum = { version = "0.6", features = ["headers"] }
+east = { git = "https://github.com/corepaper/east" }
+east-build = { git = "https://github.com/corepaper/east" }
 
 morum-base = { path = "base" }
+morum-ui = { path = "ui" }
 
 [build-dependencies]
-build-helper = "0.1.1"
+east-build-helper = { git = "https://github.com/corepaper/east" }
 
 [workspace]
 members = ["ui"]

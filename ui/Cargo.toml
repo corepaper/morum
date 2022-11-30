@@ -9,6 +9,7 @@ console_error_panic_hook = "0.1"
 wasm-bindgen = "0.2"
 web-sys = "0.3"
 serde = { version = "1", features = ["derive"] }
+east = { git = "https://github.com/corepaper/east" }
 
 morum-base = { path = "../base" }
 
