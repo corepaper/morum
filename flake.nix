@@ -38,7 +38,7 @@
     };
 
     devShell."x86_64-linux" = with pkgs; mkShell {
-      buildInputs = morumInputs ++ [ rustWasm ];
+      buildInputs = morumInputs ++ [ rustWasm mold ];
     };
   };
 }

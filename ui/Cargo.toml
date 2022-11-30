@@ -8,11 +8,6 @@ edition = "2021"
 console_error_panic_hook = "0.1"
 wasm-bindgen = "0.2"
 web-sys = "0.3"
-yew = { git = "https://github.com/yewstack/yew", features = ["csr"] }
-yew-router = { git = "https://github.com/yewstack/yew" }
-gloo-storage = "0.2"
-gloo-net = "0.2"
-gloo-utils = "0.1"
 serde = { version = "1", features = ["derive"] }
 
 morum-base = { path = "../base" }

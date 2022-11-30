@@ -1,5 +1,4 @@
 use crate::Error;
-use actix_web::{body::BoxBody, http::StatusCode, HttpResponse, ResponseError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -17,15 +16,5 @@ impl From<Error> for UserError {
 
             _ => Self::Internal,
         }
-    }
-}
-
-impl ResponseError for UserError {
-    fn status_code(&self) -> StatusCode {
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::Ok().finish()
     }
 }

@@ -16,12 +16,10 @@ async fn run() -> Result<(), Error> {
 
     let appservice = morum::appservice::start(config.clone()).await?;
 
-    morum::web::start(config.clone(), appservice).await?;
-
     Ok(())
 }
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     run().await?;
     Ok(())
