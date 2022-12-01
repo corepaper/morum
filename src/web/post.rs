@@ -1,6 +1,5 @@
-use std::sync::Arc;
 use serde::Deserialize;
-use axum::{Form, response::{Redirect, IntoResponse}, extract::{State, Path}};
+use axum::{Form, response::Redirect, extract::{State, Path}};
 use east::{render, render_with_component};
 use morum_base::types;
 use morum_ui::{App, Post, AnyComponent};
@@ -81,7 +80,7 @@ pub async fn act_post(user: User, State(context): State<AppState>, Path(id): Pat
                     });
                 }
             }
-            let post = post.ok_or(Error::UnknownPost)?;
+            let _post = post.ok_or(Error::UnknownPost)?;
 
             let room_alias = format!("#forum_post_{}:corepaper.org", id);
 

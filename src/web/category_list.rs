@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use axum::extract::State;
 use east::{render, render_with_component};
 use morum_ui::{App, CategoryList, AnyComponent};

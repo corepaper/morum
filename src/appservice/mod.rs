@@ -1,11 +1,13 @@
 mod client;
 
+pub use self::client::Client;
+
 use crate::{Config, Error};
 use regex::Regex;
 use ruma::events::{AnyStateEvent, EmptyStateKey, StateEvent};
 use ruma_macros::EventContent;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, trace};
+use tracing::debug;
 
 #[derive(Clone, Debug, Deserialize, Serialize, EventContent)]
 #[ruma_event(type = "org.corepaper.morum.category", kind = State, state_key_type = EmptyStateKey)]
@@ -168,7 +170,7 @@ impl AppService {
 
         let content = MorumCategoryEventContent { category };
 
-        let mut request = ruma::api::client::state::send_state_event::v3::Request::new(
+        let request = ruma::api::client::state::send_state_event::v3::Request::new(
             &room_id,
             &EmptyStateKey,
             &content,
@@ -246,7 +248,7 @@ impl AppService {
     ) -> Result<(), Error> {
         use ruma::events::room::message::{
             sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
-            FormattedBody, MessageFormat, MessageType, RoomMessageEventContent,
+            FormattedBody, MessageType, RoomMessageEventContent,
             TextMessageEventContent,
         };
         use ruma::TransactionId;
@@ -265,7 +267,7 @@ impl AppService {
         let user_id = ruma::UserId::parse(&format!("@{}:corepaper.org", localpart))?;
 
         let request = ruma::api::client::membership::join_room_by_id::v3::Request::new(&room_id);
-        let response = self.0.send_request_as(&user_id, request).await?;
+        let _response = self.0.send_request_as(&user_id, request).await?;
 
         let mut html_body = String::new();
 
@@ -284,7 +286,7 @@ impl AppService {
             &transaction_id,
             &message,
         )?;
-        let response = self.0.send_request_as(&user_id, request).await?;
+        let _response = self.0.send_request_as(&user_id, request).await?;
 
         Ok(())
     }

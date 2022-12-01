@@ -1,4 +1,4 @@
-use std::{sync::Arc, convert::Infallible};
+use std::convert::Infallible;
 use axum::{Form, http::request::Parts, extract::{FromRequestParts, State}, response::Redirect};
 use axum_extra::extract::{PrivateCookieJar, cookie::{Key as CookieKey, Cookie}};
 use east::{render, render_with_component};
@@ -42,7 +42,7 @@ impl User {
     }
 }
 
-pub async fn view_login(user: User, State(context): State<AppState>) -> Result<Html, UserError> {
+pub async fn view_login(user: User) -> Result<Html, UserError> {
     if user.logged_in() {
         return Err(UserError::AlreadyLoggedIn)
     }
@@ -112,7 +112,7 @@ pub enum LogoutForm {
     Logout { }
 }
 
-pub async fn act_logout(user: User, State(context): State<AppState>, Form(form): Form<LogoutForm>) -> Result<(PrivateCookieJar, Redirect), UserError> {
+pub async fn act_logout(user: User, Form(form): Form<LogoutForm>) -> Result<(PrivateCookieJar, Redirect), UserError> {
     match form {
         LogoutForm::Logout { } => {
             let mut jar = user.into_jar();

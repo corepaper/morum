@@ -1,6 +1,5 @@
-use std::sync::Arc;
 use serde::Deserialize;
-use axum::{Form, response::{Redirect, IntoResponse}, extract::{State, Path}};
+use axum::{Form, response::Redirect, extract::{State, Path}};
 use east::{render, render_with_component};
 use morum_base::types;
 use morum_ui::{App, PostList, AnyComponent};

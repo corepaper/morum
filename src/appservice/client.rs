@@ -1,7 +1,7 @@
 use crate::Error;
 use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken};
 use ruma::client::{
-    http_client::HyperRustls, DefaultConstructibleHttpClient, HttpClient, HttpClientExt,
+    http_client::HyperRustls, HttpClient, HttpClientExt,
     ResponseError, ResponseResult,
 };
 use ruma::UserId;
