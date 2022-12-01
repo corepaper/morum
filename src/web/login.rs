@@ -61,60 +61,64 @@ pub async fn view_login(user: User, State(context): State<AppState>) -> Result<H
 }
 
 #[derive(Deserialize)]
-pub enum LoginAction {
-    Login,
-}
-
-#[derive(Deserialize)]
-pub struct LoginForm {
-    pub action: LoginAction,
-    pub username: String,
-    pub password: String,
+#[serde(tag = "action")]
+pub enum LoginForm {
+    Login {
+        username: String,
+        password: String,
+    }
 }
 
 pub async fn act_login(user: User, State(context): State<AppState>, Form(form): Form<LoginForm>) -> Result<(PrivateCookieJar, Redirect), UserError> {
-    let valid = {
-        let mut found = false;
+    match form {
+        LoginForm::Login {
+            username,
+            password,
+        } => {
+            let valid = {
+                let mut found = false;
 
-        for user in &context.config.closed_beta_users {
-            if form.username == user.username && form.password == user.password {
-                found = true;
-                break;
+                for user in &context.config.closed_beta_users {
+                    if username == user.username && password == user.password {
+                        found = true;
+                        break;
+                    }
+                }
+
+                found
+            };
+
+            if valid {
+                let mut jar = user.into_jar();
+                jar = jar.add(
+                    Cookie::build("login", username)
+                        .secure(true)
+                        .http_only(true)
+                        .same_site(SameSite::Strict)
+                        .finish()
+                );
+
+                Ok((jar, Redirect::to("/")))
+            } else {
+                Err(UserError::InvalidLoginCredential)
             }
-        }
-
-        found
-    };
-
-    if valid {
-        let mut jar = user.into_jar();
-        jar = jar.add(
-            Cookie::build("login", form.username)
-                .secure(true)
-                .http_only(true)
-                .same_site(SameSite::Strict)
-                .finish()
-        );
-
-        Ok((jar, Redirect::to("/")))
-    } else {
-        Err(UserError::InvalidLoginCredential)
+        },
     }
 }
 
 #[derive(Deserialize)]
-pub enum LogoutAction {
-    Logout,
-}
-
-#[derive(Deserialize)]
-pub struct LogoutForm {
-    pub action: LogoutAction,
+#[serde(tag = "action")]
+pub enum LogoutForm {
+    Logout { }
 }
 
 pub async fn act_logout(user: User, State(context): State<AppState>, Form(form): Form<LogoutForm>) -> Result<(PrivateCookieJar, Redirect), UserError> {
-    let mut jar = user.into_jar();
-    jar = jar.remove(Cookie::named("login"));
+    match form {
+        LogoutForm::Logout { } => {
+            let mut jar = user.into_jar();
+            jar = jar.remove(Cookie::named("login"));
 
-    Ok((jar, Redirect::to("/")))
+            Ok((jar, Redirect::to("/")))
+        },
+    }
 }

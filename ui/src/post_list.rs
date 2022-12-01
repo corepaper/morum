@@ -56,20 +56,25 @@ impl Render<AnyComponent> for NewPost {
                 class: "col-12",
                 form {
                     method: "post",
+                    input {
+                        type_: "hidden",
+                        name: "action",
+                        value: "NewPost",
+                    },
                     div {
                         class: "form-group",
                         label { for_: "title", "Title" },
-                        input { type_: "text", class: "form-control", id: "title" },
+                        input { type_: "text", class: "form-control", id: "title", name: "title" },
                     },
                     div {
                         class: "form-group",
                         label { for_: "topic", "Topic" },
-                        input { type_: "text", class: "form-control", id: "topic" },
+                        input { type_: "text", class: "form-control", id: "topic", name: "topic" },
                     },
                     div {
                         class: "form-group",
                         label { for_: "content", "Content" },
-                        textarea { class: "form-control", id: "content", rows: "5" },
+                        textarea { class: "form-control", id: "content", name: "markdown", rows: "5" },
                     },
                     input {
                         class: "btn btn-primary pull-right",

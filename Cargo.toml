@@ -31,7 +31,7 @@ assign = "1"
 js_int = "0.2"
 pulldown-cmark = "0.9"
 include_dir = "0.7"
-axum = { version = "0.6", features = ["headers"] }
+axum = { version = "0.6", features = ["headers", "macros", "form"] }
 axum-extra = { version = "0.4", features = ["cookie", "cookie-private"] }
 east = { git = "https://github.com/corepaper/east" }
 east-build = { git = "https://github.com/corepaper/east" }

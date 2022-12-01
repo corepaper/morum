@@ -10,6 +10,8 @@ pub enum UserError {
     InvalidLoginCredential,
     #[error("Already logged in")]
     AlreadyLoggedIn,
+    #[error("Require login")]
+    RequireLogin,
 }
 
 impl From<Error> for UserError {
@@ -28,6 +30,7 @@ impl IntoResponse for UserError {
             Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "internal error".to_string()).into_response(),
             Self::InvalidLoginCredential => (StatusCode::UNAUTHORIZED, "invalid login".to_string()).into_response(),
             Self::AlreadyLoggedIn => Redirect::to("/").into_response(),
+            Self::RequireLogin => Redirect::to("/login").into_response(),
         }
     }
 }
