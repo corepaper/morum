@@ -21,7 +21,7 @@
 
     morumInputs = with pkgs; [
       wasm-bindgen-cli binaryen clang pkg-config
-      openssl_1_1 openssl_1_1.dev trunk nodePackages.sass
+      trunk nodePackages.sass
     ];
   in {
     legacyPackages."x86_64-linux".morum = with pkgs; rustWasmPlatform.buildRustPackage rec {
@@ -32,9 +32,6 @@
 
       cargoSha256 = "sha256-jK2Z+4tyUsjxu2l14w8IfQM4z84bYKr0s/w8tQF43hA=";
       nativeBuildInputs = morumInputs;
-
-      OPENSSL_LIB_DIR = "${openssl_1_1.out}/lib";
-      OPENSSL_DIR = "${openssl_1_1.dev}";
     };
 
     devShell."x86_64-linux" = with pkgs; mkShell {

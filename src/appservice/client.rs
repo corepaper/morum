@@ -1,7 +1,7 @@
 use crate::Error;
 use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken};
 use ruma::client::{
-    http_client::HyperNativeTls, DefaultConstructibleHttpClient, HttpClient, HttpClientExt,
+    http_client::HyperRustls, DefaultConstructibleHttpClient, HttpClient, HttpClientExt,
     ResponseError, ResponseResult,
 };
 use ruma::UserId;
@@ -33,12 +33,18 @@ pub struct Client {
     homeserver_url: String,
     access_token: String,
     supported_matrix_versions: Vec<MatrixVersion>,
-    http: HyperNativeTls,
+    http: HyperRustls,
 }
 
 impl Client {
     pub async fn new(homeserver_url: String, access_token: String) -> Result<Self, Error> {
-        let http = HyperNativeTls::default();
+        let http = hyper::Client::builder().build(
+            hyper_rustls::HttpsConnectorBuilder::new()
+                .with_native_roots()
+                .https_only()
+                .enable_http1()
+                .build()
+        );
 
         let supported_matrix_versions = http
             .send_matrix_request(
@@ -62,7 +68,7 @@ impl Client {
     pub async fn send_request<R: OutgoingRequest>(
         &self,
         request: R,
-    ) -> ResponseResult<HyperNativeTls, R> {
+    ) -> ResponseResult<HyperRustls, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
         self.http
@@ -78,7 +84,7 @@ impl Client {
     pub async fn send_request_force_auth<R: OutgoingRequest>(
         &self,
         request: R,
-    ) -> ResponseResult<HyperNativeTls, R> {
+    ) -> ResponseResult<HyperRustls, R> {
         let send_access_token = SendAccessToken::Always(&self.access_token);
 
         self.http
@@ -95,7 +101,7 @@ impl Client {
         &self,
         user_id: &UserId,
         request: R,
-    ) -> ResponseResult<HyperNativeTls, R> {
+    ) -> ResponseResult<HyperRustls, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
         self.http
@@ -104,7 +110,7 @@ impl Client {
                 send_access_token,
                 &self.supported_matrix_versions,
                 request,
-                add_user_id_to_query::<HyperNativeTls, R>(user_id),
+                add_user_id_to_query::<HyperRustls, R>(user_id),
             )
             .await
     }
