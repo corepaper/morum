@@ -81,8 +81,9 @@ impl Render<AnyComponent> for NavLoginLink {
                         class: "navbar-text",
                         form {
                             action: "/logout", method: "post",
-                            input { type_: "submit", value: "Logout" }
-                        }
+                            input { type_: "hidden", name: "action", value: "Logout" },
+                            button { class: "btn btn-link", type_: "submit", "Logout" },
+                        },
                     }
                 }
             })
@@ -92,7 +93,10 @@ impl Render<AnyComponent> for NavLoginLink {
                     class: "login",
                     span {
                         class: "navbar-text",
-                        a { href: "/login", "Login" }
+                        form {
+                            action: "/login", method: "get",
+                            button { class: "btn btn-link", type_: "submit", "Login" },
+                        },
                     }
                 }
             })

@@ -1,6 +1,6 @@
 use crate::Error;
 use thiserror::Error;
-use axum::{http::StatusCode, response::{Response, IntoResponse}};
+use axum::{http::StatusCode, response::{Response, IntoResponse, Redirect}};
 
 #[derive(Error, Debug)]
 pub enum UserError {
@@ -8,6 +8,8 @@ pub enum UserError {
     Internal,
     #[error("Login credential is invalid")]
     InvalidLoginCredential,
+    #[error("Already logged in")]
+    AlreadyLoggedIn,
 }
 
 impl From<Error> for UserError {
@@ -25,6 +27,7 @@ impl IntoResponse for UserError {
         match self {
             Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "internal error".to_string()).into_response(),
             Self::InvalidLoginCredential => (StatusCode::UNAUTHORIZED, "invalid login".to_string()).into_response(),
+            Self::AlreadyLoggedIn => Redirect::to("/").into_response(),
         }
     }
 }

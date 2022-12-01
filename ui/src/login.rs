@@ -10,6 +10,12 @@ impl Render<AnyComponent> for Login {
                 action: "/login",
                 method: "post",
 
+                input {
+                    type_: "hidden",
+                    name: "action",
+                    value: "Login",
+                },
+
                 div {
                     class: "row",
                     div {

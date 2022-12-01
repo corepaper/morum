@@ -95,10 +95,6 @@ select:not([multiple]).form-control {
   height: 1.9rem !important;
 }
 
-form {
-  margin-bottom: 1rem;
-}
-
 legend {
   font-size: $base-font-size;
   margin-bottom: 0;
@@ -232,14 +228,15 @@ section {
   @include btn_type(darken($danger, 5), $white, darken($danger, 40), $danger);
 }
 
-a.btn.btn-link {
+.btn.btn-link {
   padding: 0;
   font-size: $base-font-size;
+  color: $black;
   margin-top: -0.1rem;
   text-decoration: underline;
 }
 
-a.btn.btn-link:hover {
+.btn.btn-link:hover {
   text-decoration: none;
 }
 
