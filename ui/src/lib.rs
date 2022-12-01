@@ -3,6 +3,11 @@ mod login;
 mod post;
 mod post_list;
 
+pub use crate::category_list::CategoryList;
+pub use crate::login::Login;
+pub use crate::post::Post;
+pub use crate::post_list::PostList;
+
 use serde::{Serialize, Deserialize};
 use east::{HydrateTo, Render, RenderMulti, Markup, render_with_component, render_from_multi};
 
