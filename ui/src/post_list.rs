@@ -1,6 +1,6 @@
-use east::{Render, Markup, render, render_with_component};
-use morum_base::types;
 use crate::AnyComponent;
+use east::{render, render_with_component, Markup, Render};
+use morum_base::types;
 
 pub struct PostList {
     pub category: types::Category,
@@ -47,7 +47,7 @@ impl Render<AnyComponent> for PostList {
     }
 }
 
-pub struct NewPost { }
+pub struct NewPost {}
 
 impl Render<AnyComponent> for NewPost {
     fn render(self) -> Markup {

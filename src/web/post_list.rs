@@ -1,12 +1,20 @@
-use serde::Deserialize;
-use axum::{Form, response::Redirect, extract::{State, Path}};
+use super::{AppState, Html, User, UserError};
+use crate::Error;
+use axum::{
+    extract::{Path, State},
+    response::Redirect,
+    Form,
+};
 use east::{render, render_with_component};
 use morum_base::types;
-use morum_ui::{App, PostList, AnyComponent};
-use crate::Error;
-use super::{AppState, UserError, User, Html};
+use morum_ui::{AnyComponent, App, PostList};
+use serde::Deserialize;
 
-pub async fn view_post_list(user: User, State(context): State<AppState>, Path(id): Path<String>) -> Result<Html, UserError> {
+pub async fn view_post_list(
+    user: User,
+    State(context): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<Html, UserError> {
     let id = if id == "uncategorized" {
         None
     } else {
@@ -68,10 +76,17 @@ pub enum PostListForm {
     },
 }
 
-pub async fn act_post_list(user: User, State(context): State<AppState>, Path(id): Path<String>, Form(form): Form<PostListForm>) -> Result<Redirect, UserError> {
+pub async fn act_post_list(
+    user: User,
+    State(context): State<AppState>,
+    Path(id): Path<String>,
+    Form(form): Form<PostListForm>,
+) -> Result<Redirect, UserError> {
     match form {
         PostListForm::NewPost {
-            title, topic, markdown,
+            title,
+            topic,
+            markdown,
         } => {
             if &title == "" {
                 return Err(Error::BlankTitle.into());
@@ -120,6 +135,6 @@ pub async fn act_post_list(user: User, State(context): State<AppState>, Path(id)
                 .await?;
 
             Ok(Redirect::to(&format!("/category/{}", id)))
-        },
+        }
     }
 }

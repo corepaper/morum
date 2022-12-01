@@ -8,11 +8,11 @@ pub use crate::login::Login;
 pub use crate::post::Post;
 pub use crate::post_list::PostList;
 
-use serde::{Serialize, Deserialize};
-use east::{HydrateTo, Render, RenderMulti, Markup, render_with_component, render_from_multi};
+use east::{render_from_multi, render_with_component, HydrateTo, Markup, Render, RenderMulti};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, HydrateTo, Debug, Clone)]
-pub enum AnyComponent { }
+pub enum AnyComponent {}
 
 pub struct App {
     pub logged_in: bool,
@@ -33,7 +33,7 @@ impl RenderMulti<AnyComponent> for App {
 }
 
 pub struct Nav {
-    pub logged_in: bool
+    pub logged_in: bool,
 }
 
 impl Render<AnyComponent> for Nav {
@@ -52,7 +52,7 @@ impl Render<AnyComponent> for Nav {
     }
 }
 
-pub struct Footer { }
+pub struct Footer {}
 
 impl Render<AnyComponent> for Footer {
     fn render(self) -> Markup {

@@ -1,6 +1,6 @@
-use morum_base::types;
-use east::{Render, Markup, render_with_component};
 use crate::AnyComponent;
+use east::{render_with_component, Markup, Render};
+use morum_base::types;
 
 pub struct CategoryList {
     pub categories: Vec<types::Category>,
@@ -9,9 +9,10 @@ pub struct CategoryList {
 impl Render<AnyComponent> for CategoryList {
     fn render(self) -> Markup {
         render_with_component!(AnyComponent, {
-            self.categories.into_iter().map(|c| {
-                CategoryListCategory { category: c }
-            }).collect::<Vec<_>>()
+            self.categories
+                .into_iter()
+                .map(|c| CategoryListCategory { category: c })
+                .collect::<Vec<_>>()
         })
     }
 }

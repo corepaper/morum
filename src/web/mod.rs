@@ -1,16 +1,16 @@
-mod user_error;
 mod category_list;
 mod login;
-mod post_list;
 mod post;
+mod post_list;
+mod user_error;
 
-pub use self::user_error::UserError;
 pub use self::login::User;
+pub use self::user_error::UserError;
 
-use std::{sync::Arc, net::SocketAddr, ops::Deref};
-use axum::{routing, Router, extract::FromRef};
+use crate::{AppService, Config, Error};
+use axum::{extract::FromRef, routing, Router};
 use axum_extra::extract::cookie::Key as CookieKey;
-use crate::{Config, AppService, Error};
+use std::{net::SocketAddr, ops::Deref, sync::Arc};
 
 pub struct Context {
     pub config: Config,
@@ -56,10 +56,19 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
     app = route_trunk_assets(app);
     app = app
         .route("/", routing::get(self::category_list::view_category_list))
-        .route("/login", routing::get(self::login::view_login).post(self::login::act_login))
+        .route(
+            "/login",
+            routing::get(self::login::view_login).post(self::login::act_login),
+        )
         .route("/logout", routing::post(self::login::act_logout))
-        .route("/category/:id", routing::get(self::post_list::view_post_list).post(self::post_list::act_post_list))
-        .route("/post/:id", routing::get(self::post::view_post).post(self::post::act_post));
+        .route(
+            "/category/:id",
+            routing::get(self::post_list::view_post_list).post(self::post_list::act_post_list),
+        )
+        .route(
+            "/post/:id",
+            routing::get(self::post::view_post).post(self::post::act_post),
+        );
 
     let app: Router<()> = app.with_state(AppState(context));
 

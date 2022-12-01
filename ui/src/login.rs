@@ -1,7 +1,7 @@
-use east::{Render, Markup, render_with_component};
 use crate::AnyComponent;
+use east::{render_with_component, Markup, Render};
 
-pub struct Login { }
+pub struct Login {}
 
 impl Render<AnyComponent> for Login {
     fn render(self) -> Markup {

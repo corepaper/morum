@@ -1,12 +1,20 @@
-use serde::Deserialize;
-use axum::{Form, response::Redirect, extract::{State, Path}};
+use super::{AppState, Html, User, UserError};
+use crate::Error;
+use axum::{
+    extract::{Path, State},
+    response::Redirect,
+    Form,
+};
 use east::{render, render_with_component};
 use morum_base::types;
-use morum_ui::{App, Post, AnyComponent};
-use crate::Error;
-use super::{AppState, UserError, User, Html};
+use morum_ui::{AnyComponent, App, Post};
+use serde::Deserialize;
 
-pub async fn view_post(user: User, State(context): State<AppState>, Path(id): Path<usize>) -> Result<Html, UserError> {
+pub async fn view_post(
+    user: User,
+    State(context): State<AppState>,
+    Path(id): Path<usize>,
+) -> Result<Html, UserError> {
     let rooms = context.appservice.valid_rooms().await?;
     let mut post = None;
     for room in rooms {
@@ -51,16 +59,17 @@ pub async fn view_post(user: User, State(context): State<AppState>, Path(id): Pa
 #[derive(Deserialize)]
 #[serde(tag = "action")]
 pub enum PostForm {
-    NewComment {
-        comment: String,
-    },
+    NewComment { comment: String },
 }
 
-pub async fn act_post(user: User, State(context): State<AppState>, Path(id): Path<usize>, Form(form): Form<PostForm>) -> Result<Redirect, UserError> {
+pub async fn act_post(
+    user: User,
+    State(context): State<AppState>,
+    Path(id): Path<usize>,
+    Form(form): Form<PostForm>,
+) -> Result<Redirect, UserError> {
     match form {
-        PostForm::NewComment {
-            comment
-        } => {
+        PostForm::NewComment { comment } => {
             if &comment == "" {
                 return Err(Error::BlankContent.into());
             }
@@ -90,6 +99,6 @@ pub async fn act_post(user: User, State(context): State<AppState>, Path(id): Pat
                 .await?;
 
             Ok(Redirect::to(&format!("/post/{}", id)))
-        },
+        }
     }
 }

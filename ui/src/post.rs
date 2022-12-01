@@ -1,6 +1,6 @@
-use east::{Render, Markup, PreEscaped, render, render_with_component};
-use morum_base::types;
 use crate::AnyComponent;
+use east::{render, render_with_component, Markup, PreEscaped, Render};
+use morum_base::types;
 
 pub struct Post {
     pub post: types::Post,
@@ -49,7 +49,7 @@ impl Render<AnyComponent> for Post {
     }
 }
 
-pub struct NewComment { }
+pub struct NewComment {}
 
 impl Render<AnyComponent> for NewComment {
     fn render(self) -> Markup {

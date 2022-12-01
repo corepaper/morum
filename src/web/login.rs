@@ -1,12 +1,20 @@
-use std::convert::Infallible;
-use axum::{Form, http::request::Parts, extract::{FromRequestParts, State}, response::Redirect};
-use axum_extra::extract::{PrivateCookieJar, cookie::{Key as CookieKey, Cookie}};
-use east::{render, render_with_component};
-use morum_ui::{App, Login, AnyComponent};
+use super::{AppState, Html, UserError};
 use async_trait::async_trait;
-use serde::Deserialize;
+use axum::{
+    extract::{FromRequestParts, State},
+    http::request::Parts,
+    response::Redirect,
+    Form,
+};
+use axum_extra::extract::{
+    cookie::{Cookie, Key as CookieKey},
+    PrivateCookieJar,
+};
 use cookie::SameSite;
-use super::{AppState, UserError, Html};
+use east::{render, render_with_component};
+use morum_ui::{AnyComponent, App, Login};
+use serde::Deserialize;
+use std::convert::Infallible;
 
 pub struct User {
     username: Option<String>,
@@ -17,14 +25,14 @@ pub struct User {
 impl FromRequestParts<AppState> for User {
     type Rejection = Infallible;
 
-    async fn from_request_parts(parts: &mut Parts, state: &AppState) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let jar = PrivateCookieJar::<CookieKey>::from_request_parts(parts, state).await?;
         let username = jar.get("login").map(|cookie| cookie.value().to_owned());
 
-        Ok(User {
-            username,
-            jar
-        })
+        Ok(User { username, jar })
     }
 }
 
@@ -44,7 +52,7 @@ impl User {
 
 pub async fn view_login(user: User) -> Result<Html, UserError> {
     if user.logged_in() {
-        return Err(UserError::AlreadyLoggedIn)
+        return Err(UserError::AlreadyLoggedIn);
     }
 
     Ok(Html {
@@ -63,18 +71,16 @@ pub async fn view_login(user: User) -> Result<Html, UserError> {
 #[derive(Deserialize)]
 #[serde(tag = "action")]
 pub enum LoginForm {
-    Login {
-        username: String,
-        password: String,
-    }
+    Login { username: String, password: String },
 }
 
-pub async fn act_login(user: User, State(context): State<AppState>, Form(form): Form<LoginForm>) -> Result<(PrivateCookieJar, Redirect), UserError> {
+pub async fn act_login(
+    user: User,
+    State(context): State<AppState>,
+    Form(form): Form<LoginForm>,
+) -> Result<(PrivateCookieJar, Redirect), UserError> {
     match form {
-        LoginForm::Login {
-            username,
-            password,
-        } => {
+        LoginForm::Login { username, password } => {
             let valid = {
                 let mut found = false;
 
@@ -95,30 +101,33 @@ pub async fn act_login(user: User, State(context): State<AppState>, Form(form): 
                         .secure(true)
                         .http_only(true)
                         .same_site(SameSite::Strict)
-                        .finish()
+                        .finish(),
                 );
 
                 Ok((jar, Redirect::to("/")))
             } else {
                 Err(UserError::InvalidLoginCredential)
             }
-        },
+        }
     }
 }
 
 #[derive(Deserialize)]
 #[serde(tag = "action")]
 pub enum LogoutForm {
-    Logout { }
+    Logout {},
 }
 
-pub async fn act_logout(user: User, Form(form): Form<LogoutForm>) -> Result<(PrivateCookieJar, Redirect), UserError> {
+pub async fn act_logout(
+    user: User,
+    Form(form): Form<LogoutForm>,
+) -> Result<(PrivateCookieJar, Redirect), UserError> {
     match form {
-        LogoutForm::Logout { } => {
+        LogoutForm::Logout {} => {
             let mut jar = user.into_jar();
             jar = jar.remove(Cookie::named("login"));
 
             Ok((jar, Redirect::to("/")))
-        },
+        }
     }
 }

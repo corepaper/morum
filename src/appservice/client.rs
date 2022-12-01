@@ -1,8 +1,7 @@
 use crate::Error;
 use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken};
 use ruma::client::{
-    http_client::HyperRustls, HttpClient, HttpClientExt,
-    ResponseError, ResponseResult,
+    http_client::HyperRustls, HttpClient, HttpClientExt, ResponseError, ResponseResult,
 };
 use ruma::UserId;
 
@@ -43,7 +42,7 @@ impl Client {
                 .with_native_roots()
                 .https_only()
                 .enable_http1()
-                .build()
+                .build(),
         );
 
         let supported_matrix_versions = http

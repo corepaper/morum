@@ -248,8 +248,7 @@ impl AppService {
     ) -> Result<(), Error> {
         use ruma::events::room::message::{
             sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
-            FormattedBody, MessageType, RoomMessageEventContent,
-            TextMessageEventContent,
+            FormattedBody, MessageType, RoomMessageEventContent, TextMessageEventContent,
         };
         use ruma::TransactionId;
 
