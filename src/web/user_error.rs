@@ -1,18 +1,14 @@
+use super::{extract, Html};
 use crate::Error;
-use http::Request;
 use axum::{
-    TypedHeader,
     http::StatusCode,
-    response::{IntoResponse, Redirect, Response},
     middleware::Next,
-    extract::{State, Query},
-    headers,
+    response::{IntoResponse, Redirect, Response},
 };
-use thiserror::Error;
 use east::{render, render_with_component};
-use morum_ui::{App, AnyComponent};
-use std::collections::HashMap;
-use super::{extract, Html, AppState};
+use http::Request;
+use morum_ui::{AnyComponent, App};
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum UserError {
@@ -81,20 +77,21 @@ pub async fn handle_error<B>(user: extract::User, req: Request<B>, next: Next<B>
         .and_then(|(host, referer)| referer.to_str().ok().map(|referer| (host, referer)))
         .map(|(host, referer)| (host.to_string(), referer.to_string()))
         .and_then(|(host, referer)| {
-            if referer.starts_with(&format!("https://{}", host)) || (
-                referer.starts_with(&format!("http://{}", host)) && host.starts_with("127.0.0.1:")) {
+            if referer.starts_with(&format!("https://{}", host))
+                || (referer.starts_with(&format!("http://{}", host))
+                    && host.starts_with("127.0.0.1:"))
+            {
                 Some(referer)
             } else {
                 None
             }
         });
 
-
     let res = next.run(req).await;
 
     if let Some(error) = res.extensions().get::<UserError>() {
         if let Some(redirect) = error.redirect() {
-            return redirect.into_response()
+            return redirect.into_response();
         }
 
         let html = Html {
@@ -125,9 +122,9 @@ pub async fn handle_error<B>(user: extract::User, req: Request<B>, next: Next<B>
         };
 
         if let Some(status_code) = error.status_code() {
-            return (status_code, html).into_response()
+            return (status_code, html).into_response();
         } else {
-            return html.into_response()
+            return html.into_response();
         }
     }
 

@@ -1,20 +1,11 @@
 use super::{extract, AppState, Html};
-use async_trait::async_trait;
-use axum::{
-    http::request::Parts,
-    response::Redirect,
-    Form,
-};
-use axum_extra::extract::{
-    cookie::{Cookie, Key as CookieKey},
-    PrivateCookieJar,
-};
+use crate::Error;
+use axum::response::Redirect;
+use axum_extra::extract::{cookie::Cookie, PrivateCookieJar};
 use cookie::SameSite;
 use east::{render, render_with_component};
 use morum_ui::{AnyComponent, App, Login};
 use serde::Deserialize;
-use std::convert::Infallible;
-use crate::Error;
 
 pub async fn view_login(user: extract::User) -> Result<Html, Error> {
     if user.logged_in() {

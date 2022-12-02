@@ -1,9 +1,9 @@
 mod category_list;
+mod extract;
 mod login;
 mod post;
 mod post_list;
 mod user_error;
-mod extract;
 
 pub use self::user_error::UserError;
 
@@ -73,7 +73,10 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
     let state = AppState(context);
 
     let app: Router<()> = app
-        .layer(middleware::from_fn_with_state(state.clone(), self::user_error::handle_error))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            self::user_error::handle_error,
+        ))
         .with_state(state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));

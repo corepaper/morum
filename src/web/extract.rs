@@ -1,23 +1,16 @@
-use super::{AppState, Html};
+use super::AppState;
+use crate::Error;
 use async_trait::async_trait;
-use http::Request;
 use axum::{
-    BoxError,
     body::HttpBody,
     extract::{FromRequest, FromRequestParts},
     http::request::Parts,
-    response::Redirect,
+    BoxError,
 };
-use axum_extra::extract::{
-    cookie::{Cookie, Key as CookieKey},
-    PrivateCookieJar,
-};
-use cookie::SameSite;
-use east::{render, render_with_component};
-use morum_ui::{AnyComponent, App, Login};
-use serde::{Deserialize, de::DeserializeOwned};
-use std::{ops::Deref, convert::Infallible};
-use crate::Error;
+use axum_extra::extract::{cookie::Key as CookieKey, PrivateCookieJar};
+use http::Request;
+use serde::de::DeserializeOwned;
+use std::{convert::Infallible, ops::Deref};
 
 pub struct User {
     username: Option<String>,
