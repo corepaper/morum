@@ -27,6 +27,10 @@ pub enum Error {
     #[error("Hyper error")]
     Hyper(#[from] hyper::Error),
 
+    #[error("Already logged in")]
+    AlreadyLoggedIn,
+    #[error("Require logging in")]
+    RequireLogin,
     #[error("Login credential is invalid")]
     InvalidLoginCredential,
     #[error("Unknown category")]

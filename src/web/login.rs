@@ -1,4 +1,4 @@
-use super::{AppState, Html, UserError};
+use super::{AppState, Html};
 use async_trait::async_trait;
 use axum::{
     extract::{FromRequestParts, State},
@@ -15,6 +15,7 @@ use east::{render, render_with_component};
 use morum_ui::{AnyComponent, App, Login};
 use serde::Deserialize;
 use std::convert::Infallible;
+use crate::Error;
 
 pub struct User {
     username: Option<String>,
@@ -50,9 +51,9 @@ impl User {
     }
 }
 
-pub async fn view_login(user: User) -> Result<Html, UserError> {
+pub async fn view_login(user: User) -> Result<Html, Error> {
     if user.logged_in() {
-        return Err(UserError::AlreadyLoggedIn);
+        return Err(Error::AlreadyLoggedIn);
     }
 
     Ok(Html {
@@ -78,7 +79,7 @@ pub async fn act_login(
     user: User,
     State(context): State<AppState>,
     Form(form): Form<LoginForm>,
-) -> Result<(PrivateCookieJar, Redirect), UserError> {
+) -> Result<(PrivateCookieJar, Redirect), Error> {
     match form {
         LoginForm::Login { username, password } => {
             let valid = {
@@ -106,7 +107,7 @@ pub async fn act_login(
 
                 Ok((jar, Redirect::to("/")))
             } else {
-                Err(UserError::InvalidLoginCredential)
+                Err(Error::InvalidLoginCredential)
             }
         }
     }
@@ -121,7 +122,7 @@ pub enum LogoutForm {
 pub async fn act_logout(
     user: User,
     Form(form): Form<LogoutForm>,
-) -> Result<(PrivateCookieJar, Redirect), UserError> {
+) -> Result<(PrivateCookieJar, Redirect), Error> {
     match form {
         LogoutForm::Logout {} => {
             let mut jar = user.into_jar();

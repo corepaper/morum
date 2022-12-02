@@ -8,7 +8,7 @@ pub use self::login::User;
 pub use self::user_error::UserError;
 
 use crate::{AppService, Config, Error};
-use axum::{extract::FromRef, routing, Router};
+use axum::{extract::FromRef, middleware, routing, Router};
 use axum_extra::extract::cookie::Key as CookieKey;
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
 
@@ -70,7 +70,11 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
             routing::get(self::post::view_post).post(self::post::act_post),
         );
 
-    let app: Router<()> = app.with_state(AppState(context));
+    let state = AppState(context);
+
+    let app: Router<()> = app
+        .layer(middleware::from_fn_with_state(state.clone(), self::user_error::handle_error))
+        .with_state(state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     axum::Server::bind(&addr)

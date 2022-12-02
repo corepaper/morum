@@ -1,4 +1,4 @@
-use super::{AppState, Html, User, UserError};
+use super::{AppState, Html, User};
 use crate::Error;
 use axum::{
     extract::{Path, State},
@@ -14,7 +14,7 @@ pub async fn view_post(
     user: User,
     State(context): State<AppState>,
     Path(id): Path<usize>,
-) -> Result<Html, UserError> {
+) -> Result<Html, Error> {
     let rooms = context.appservice.valid_rooms().await?;
     let mut post = None;
     for room in rooms {
@@ -67,14 +67,14 @@ pub async fn act_post(
     State(context): State<AppState>,
     Path(id): Path<usize>,
     Form(form): Form<PostForm>,
-) -> Result<Redirect, UserError> {
+) -> Result<Redirect, Error> {
     match form {
         PostForm::NewComment { comment } => {
             if &comment == "" {
                 return Err(Error::BlankContent.into());
             }
 
-            let username = user.username().to_owned().ok_or(UserError::RequireLogin)?;
+            let username = user.username().to_owned().ok_or(Error::RequireLogin)?;
 
             let localpart = format!("forum_user_{}", username);
 

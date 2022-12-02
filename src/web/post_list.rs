@@ -1,4 +1,4 @@
-use super::{AppState, Html, User, UserError};
+use super::{AppState, Html, User};
 use crate::Error;
 use axum::{
     extract::{Path, State},
@@ -14,7 +14,7 @@ pub async fn view_post_list(
     user: User,
     State(context): State<AppState>,
     Path(id): Path<String>,
-) -> Result<Html, UserError> {
+) -> Result<Html, Error> {
     let id = if id == "uncategorized" {
         None
     } else {
@@ -81,7 +81,7 @@ pub async fn act_post_list(
     State(context): State<AppState>,
     Path(id): Path<String>,
     Form(form): Form<PostListForm>,
-) -> Result<Redirect, UserError> {
+) -> Result<Redirect, Error> {
     match form {
         PostListForm::NewPost {
             title,
@@ -105,7 +105,7 @@ pub async fn act_post_list(
             } else {
                 Some(id.clone())
             };
-            let username = user.username().to_owned().ok_or(UserError::RequireLogin)?;
+            let username = user.username().to_owned().ok_or(Error::RequireLogin)?;
 
             let localpart = format!("forum_user_{}", username);
 
