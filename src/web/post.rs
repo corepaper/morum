@@ -1,7 +1,6 @@
-use super::{AppState, Html, User};
+use super::{extract, AppState, Html};
 use crate::Error;
 use axum::{
-    extract::{Path, State},
     response::Redirect,
     Form,
 };
@@ -11,14 +10,14 @@ use morum_ui::{AnyComponent, App, Post};
 use serde::Deserialize;
 
 pub async fn view_post(
-    user: User,
-    State(context): State<AppState>,
-    Path(id): Path<usize>,
+    user: extract::User,
+    context: extract::State<AppState>,
+    path: extract::Path<usize>,
 ) -> Result<Html, Error> {
     let rooms = context.appservice.valid_rooms().await?;
     let mut post = None;
     for room in rooms {
-        if room.post_id == id {
+        if room.post_id == path.0 {
             post = Some(types::Post {
                 title: room.title,
                 topic: room.topic,
@@ -63,12 +62,12 @@ pub enum PostForm {
 }
 
 pub async fn act_post(
-    user: User,
-    State(context): State<AppState>,
-    Path(id): Path<usize>,
-    Form(form): Form<PostForm>,
+    user: extract::User,
+    context: extract::State<AppState>,
+    path: extract::Path<usize>,
+    form: extract::Form<PostForm>,
 ) -> Result<Redirect, Error> {
-    match form {
+    match form.0 {
         PostForm::NewComment { comment } => {
             if &comment == "" {
                 return Err(Error::BlankContent.into());
@@ -81,7 +80,7 @@ pub async fn act_post(
             let rooms = context.appservice.valid_rooms().await?;
             let mut post = None;
             for room in rooms {
-                if room.post_id == id {
+                if room.post_id == path.0 {
                     post = Some(types::Post {
                         title: room.title,
                         topic: room.topic,
@@ -91,14 +90,14 @@ pub async fn act_post(
             }
             let _post = post.ok_or(Error::UnknownPost)?;
 
-            let room_alias = format!("#forum_post_{}:corepaper.org", id);
+            let room_alias = format!("#forum_post_{}:corepaper.org", path.0);
 
             context
                 .appservice
                 .send_message(&localpart, &room_alias, &comment)
                 .await?;
 
-            Ok(Redirect::to(&format!("/post/{}", id)))
+            Ok(Redirect::to(&format!("/post/{}", path.0)))
         }
     }
 }

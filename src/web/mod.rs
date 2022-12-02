@@ -3,8 +3,8 @@ mod login;
 mod post;
 mod post_list;
 mod user_error;
+mod extract;
 
-pub use self::login::User;
 pub use self::user_error::UserError;
 
 use crate::{AppService, Config, Error};

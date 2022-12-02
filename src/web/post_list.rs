@@ -1,7 +1,6 @@
-use super::{AppState, Html, User};
+use super::{extract, AppState, Html};
 use crate::Error;
 use axum::{
-    extract::{Path, State},
     response::Redirect,
     Form,
 };
@@ -11,14 +10,14 @@ use morum_ui::{AnyComponent, App, PostList};
 use serde::Deserialize;
 
 pub async fn view_post_list(
-    user: User,
-    State(context): State<AppState>,
-    Path(id): Path<String>,
+    user: extract::User,
+    context: extract::State<AppState>,
+    path: extract::Path<String>,
 ) -> Result<Html, Error> {
-    let id = if id == "uncategorized" {
+    let id = if path.0 == "uncategorized" {
         None
     } else {
-        Some(id)
+        Some(path.0)
     };
 
     let mut category = None;
@@ -77,12 +76,12 @@ pub enum PostListForm {
 }
 
 pub async fn act_post_list(
-    user: User,
-    State(context): State<AppState>,
-    Path(id): Path<String>,
-    Form(form): Form<PostListForm>,
+    user: extract::User,
+    context: extract::State<AppState>,
+    path: extract::Path<String>,
+    form: extract::Form<PostListForm>,
 ) -> Result<Redirect, Error> {
-    match form {
+    match form.0 {
         PostListForm::NewPost {
             title,
             topic,
@@ -100,10 +99,10 @@ pub async fn act_post_list(
                 return Err(Error::BlankContent.into());
             }
 
-            let category_id = if id == "uncategorized" {
+            let category_id = if path.0 == "uncategorized" {
                 None
             } else {
-                Some(id.clone())
+                Some(path.0.clone())
             };
             let username = user.username().to_owned().ok_or(Error::RequireLogin)?;
 
@@ -134,7 +133,7 @@ pub async fn act_post_list(
                 .send_message(&localpart, &room_alias, &markdown)
                 .await?;
 
-            Ok(Redirect::to(&format!("/category/{}", id)))
+            Ok(Redirect::to(&format!("/category/{}", path.0)))
         }
     }
 }

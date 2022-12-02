@@ -26,6 +26,8 @@ pub enum Error {
     SystemTime(#[from] std::time::SystemTimeError),
     #[error("Hyper error")]
     Hyper(#[from] hyper::Error),
+    #[error("Axum form error")]
+    AxumForm(#[from] axum::extract::rejection::FormRejection),
 
     #[error("Already logged in")]
     AlreadyLoggedIn,

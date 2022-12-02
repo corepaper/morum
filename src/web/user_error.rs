@@ -12,7 +12,7 @@ use thiserror::Error;
 use east::{render, render_with_component};
 use morum_ui::{App, AnyComponent};
 use std::collections::HashMap;
-use super::{User, Html, AppState};
+use super::{extract, Html, AppState};
 
 #[derive(Error, Debug)]
 pub enum UserError {
@@ -72,7 +72,7 @@ impl IntoResponse for Error {
     }
 }
 
-pub async fn handle_error<B>(user: User, req: Request<B>, next: Next<B>) -> Response {
+pub async fn handle_error<B>(user: extract::User, req: Request<B>, next: Next<B>) -> Response {
     let host = dbg!(req.headers().get("Host"));
     let referer = dbg!(req.headers().get("Referer"));
     let go_back = host
