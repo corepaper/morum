@@ -21,6 +21,7 @@ thiserror = "1"
 ruma = { version = "0.7", features = ["full", "unstable-sanitize", "rand"] }
 ruma-client = { version = "0.10", features = ["hyper", "hyper-rustls"] }
 ruma-macros = "0.10"
+# matrix-sdk = { version = "0.6", default-features = false, features = ["e2e-encryption", "sled", "rustls-tls"] }
 clap = { version = "4", features = ["derive"] }
 url = "2"
 hyper = "0.14"
