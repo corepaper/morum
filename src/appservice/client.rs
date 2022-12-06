@@ -1,9 +1,11 @@
 use crate::Error;
 use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken};
 use ruma::client::{
-    http_client::HyperRustls, HttpClient, HttpClientExt, ResponseError, ResponseResult,
+    HttpClient, HttpClientExt, ResponseError, ResponseResult,
 };
 use ruma::UserId;
+
+pub type RumaHttpClient = ruma::client::http_client::Reqwest;
 
 fn add_user_id_to_query<C: HttpClient + ?Sized, R: OutgoingRequest>(
     user_id: &UserId,
@@ -32,18 +34,12 @@ pub struct Client {
     homeserver_url: String,
     access_token: String,
     supported_matrix_versions: Vec<MatrixVersion>,
-    http: HyperRustls,
+    http: RumaHttpClient,
 }
 
 impl Client {
     pub async fn new(homeserver_url: String, access_token: String) -> Result<Self, Error> {
-        let http = hyper::Client::builder().build(
-            hyper_rustls::HttpsConnectorBuilder::new()
-                .with_native_roots()
-                .https_only()
-                .enable_http1()
-                .build(),
-        );
+        let http = RumaHttpClient::default();
 
         let supported_matrix_versions = http
             .send_matrix_request(
@@ -67,7 +63,7 @@ impl Client {
     pub async fn send_request<R: OutgoingRequest>(
         &self,
         request: R,
-    ) -> ResponseResult<HyperRustls, R> {
+    ) -> ResponseResult<RumaHttpClient, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
         self.http
@@ -83,7 +79,7 @@ impl Client {
     pub async fn send_request_force_auth<R: OutgoingRequest>(
         &self,
         request: R,
-    ) -> ResponseResult<HyperRustls, R> {
+    ) -> ResponseResult<RumaHttpClient, R> {
         let send_access_token = SendAccessToken::Always(&self.access_token);
 
         self.http
@@ -100,7 +96,7 @@ impl Client {
         &self,
         user_id: &UserId,
         request: R,
-    ) -> ResponseResult<HyperRustls, R> {
+    ) -> ResponseResult<RumaHttpClient, R> {
         let send_access_token = SendAccessToken::IfRequired(&self.access_token);
 
         self.http
@@ -109,8 +105,23 @@ impl Client {
                 send_access_token,
                 &self.supported_matrix_versions,
                 request,
-                add_user_id_to_query::<HyperRustls, R>(user_id),
+                add_user_id_to_query::<RumaHttpClient, R>(user_id),
             )
             .await
     }
+
+    pub async fn user(
+        &self,
+        user_id: &UserId,
+    ) -> Result<UserClient, Error> {
+        let client = matrix_sdk::Client::builder()
+            .homeserver_url(self.homeserver_url.clone())
+            .appservice_mode()
+            .build()
+            .await?;
+
+        Ok(UserClient(client))
+    }
 }
+
+pub struct UserClient(matrix_sdk::Client);

@@ -16,6 +16,8 @@ pub enum Error {
     UrlParse(#[from] url::ParseError),
     #[error("Ruma client error")]
     RumaClient(Box<dyn std::error::Error>),
+    #[error("Matrix client build error")]
+    MatrixClientBuild(#[from] matrix_sdk::ClientBuildError),
     // #[error("Matrix error")]
     // Matrix(#[from] matrix_sdk::Error),
     // #[error("Matrix HTTP error")]
@@ -53,8 +55,8 @@ impl From<std::convert::Infallible> for Error {
     }
 }
 
-impl<R: std::error::Error + 'static> From<ruma::client::Error<hyper::Error, R>> for Error {
-    fn from(err: ruma::client::Error<hyper::Error, R>) -> Self {
+impl<R: std::error::Error + 'static> From<ruma::client::Error<matrix_sdk::reqwest::Error, R>> for Error {
+    fn from(err: ruma::client::Error<matrix_sdk::reqwest::Error, R>) -> Self {
         Self::RumaClient(Box::new(err))
     }
 }
