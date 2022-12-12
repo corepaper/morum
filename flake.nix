@@ -30,7 +30,7 @@
 
       src = ./.;
 
-      cargoSha256 = "sha256-jK2Z+4tyUsjxu2l14w8IfQM4z84bYKr0s/w8tQF43hA=";
+      cargoSha256 = "sha256-/p8mVTwXBi5ThAtDg6RGT2O/N0ItTuiA2oVK0HrDBo8=";
       nativeBuildInputs = morumInputs;
     };
 
