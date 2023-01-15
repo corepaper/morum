@@ -7,7 +7,7 @@ use regex::Regex;
 use ruma::serde::Raw;
 use ruma::events::{SyncStateEvent, AnyStateEvent, EmptyStateKey, StaticEventContent, StateEvent, StateEventContent, RedactedStateEventContent, RedactContent, room::name::RoomNameEventContent, room::topic::RoomTopicEventContent};
 use ruma_macros::EventContent;
-use matrix_sdk::config::SyncSettings;
+use matrix_sdk::{config::SyncSettings, room::MessagesOptions};
 use serde::{Deserialize, de::DeserializeOwned, Serialize};
 use tokio::task;
 use tracing::debug;
@@ -158,26 +158,13 @@ impl AppService {
         room_alias_id: &str,
         category: Option<String>,
     ) -> Result<(), Error> {
-        let request =
-            ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
-        let response = self
-            .client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
-
-        let room_id = response.room_id;
+        let room_id = self.forum_user.resolve_room_alias(room_alias_id.try_into()?).await?.room_id;
 
         let content = MorumCategoryEventContent { category };
 
-        let request = ruma::api::client::state::send_state_event::v3::Request::new(
-            &room_id,
-            &EmptyStateKey,
-            &content,
-        )?;
+        let room = self.forum_user.get_joined_room(&room_id).ok_or(Error::UnknownPost)?;
+        room.send_state_event(content).await?;
 
-        self.client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
         Ok(())
     }
 
@@ -188,28 +175,19 @@ impl AppService {
         };
         use ruma::events::{AnyMessageLikeEvent, AnyTimelineEvent, MessageLikeEvent};
 
-        let mut messages = Vec::new();
+        let room_id = self.forum_user.resolve_room_alias(room_alias_id.try_into()?).await?.room_id;
+        let room = self.forum_user.get_joined_room(&room_id).ok_or(Error::UnknownPost)?;
 
-        let request =
-            ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
-        let response = self
-            .client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
-
-        let mut request = ruma::api::client::message::get_message_events::v3::Request::backward(
-            &response.room_id,
-        );
-        request.limit = js_int::UInt::MAX;
         let types_filter = ["m.room.message".to_string()];
-        request.filter.types = Some(&types_filter);
-        let response = self
-            .client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
+        let mut messages_options = MessagesOptions::backward();
+        messages_options.limit = js_int::UInt::MAX;
+        messages_options.filter.types = Some(&types_filter);
 
-        for message_raw in response.chunk {
-            let message = message_raw.deserialize()?;
+        let messages_chunk = room.messages(messages_options).await?.chunk;
+
+        let mut messages = Vec::new();
+        for message_raw in messages_chunk {
+            let message = message_raw.event.deserialize()?;
 
             if let AnyTimelineEvent::MessageLike(AnyMessageLikeEvent::RoomMessage(
                 MessageLikeEvent::Original(message),
@@ -251,14 +229,7 @@ impl AppService {
         };
         use ruma::TransactionId;
 
-        let request =
-            ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
-        let response = self
-            .client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
-
-        let room_id = response.room_id;
+        let room_id = self.forum_user.resolve_room_alias(room_alias_id.try_into()?).await?.room_id;
 
         self.ensure_registered(localpart).await?;
 
@@ -286,6 +257,8 @@ impl AppService {
         )?;
         let _response = self.client.send_request_as(&user_id, request).await?;
 
+        self.forum_user.sync_once(SyncSettings::default().full_state(true)).await?;
+
         Ok(())
     }
 
@@ -304,9 +277,7 @@ impl AppService {
         request.preset = Some(RoomPreset::PublicChat);
         request.is_direct = false;
 
-        self.client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
+        self.forum_user.create_room(request).await?;
         Ok(())
     }
 }
