@@ -135,12 +135,12 @@ impl Client {
             .build()
             .await?;
 
-        let session = dbg!(Session {
+        let session = Session {
             access_token: response.access_token,
             refresh_token: response.refresh_token,
             user_id: response.user_id,
             device_id: response.device_id,
-        });
+        };
 
         client.restore_login(session).await?;
 

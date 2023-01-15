@@ -4,12 +4,30 @@ pub use self::client::Client;
 
 use crate::{Config, Error};
 use regex::Regex;
-use ruma::events::{AnyStateEvent, EmptyStateKey, StateEvent};
+use ruma::serde::Raw;
+use ruma::events::{SyncStateEvent, AnyStateEvent, EmptyStateKey, StaticEventContent, StateEvent, StateEventContent, RedactedStateEventContent, RedactContent, room::name::RoomNameEventContent, room::topic::RoomTopicEventContent};
 use ruma_macros::EventContent;
 use matrix_sdk::config::SyncSettings;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, de::DeserializeOwned, Serialize};
 use tokio::task;
 use tracing::debug;
+
+fn deserialize_sync_state_events_to_content<C>(events: Vec<Raw<SyncStateEvent<C>>>) -> Result<Option<C>, Error> where
+    C: StateEventContent + RedactContent,
+    C::Redacted: RedactedStateEventContent<StateKey=C::StateKey>,
+{
+    Ok(if let Some(event) = events.first() {
+        let event = event.deserialize()?;
+
+        if let SyncStateEvent::Original(event) = event {
+            Some(event.content)
+        } else {
+            None
+        }
+    } else {
+        None
+    })
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize, EventContent)]
 #[ruma_event(type = "org.corepaper.morum.category", kind = State, state_key_type = EmptyStateKey)]
@@ -43,6 +61,8 @@ impl AppService {
     pub async fn new(homeserver_url: String, access_token: String) -> Result<Self, Error> {
         let client = self::client::Client::new(homeserver_url, access_token).await?;
         let forum_user = client.user("forum".try_into().expect("forum is valid user id")).await?;
+        forum_user.sync_once(SyncSettings::default().full_state(true)).await?;
+
         let forum_user_sync = forum_user.clone();
 
         task::spawn(async move {
@@ -85,61 +105,25 @@ impl AppService {
     }
 
     pub async fn valid_rooms(&self) -> Result<Vec<Room>, Error> {
-        let mut rooms = Vec::new();
+        let mut ret = Vec::new();
 
-        let request = ruma::api::client::membership::joined_rooms::v3::Request::new();
-        let response = self
-            .client
-            .send_request_as("@forum:corepaper.org".try_into()?, request)
-            .await?;
+        let joined_rooms = self.forum_user.joined_rooms();
 
-        for room_id in response.joined_rooms {
-            debug!("room id: {:?}", room_id);
+        for room in joined_rooms {
+            debug!("room id: {:?}", room.room_id());
 
-            let mut title = None;
-            let mut topic = None;
-            let mut category = None;
+            let category_state_events = room.get_state_events_static::<MorumCategoryEventContent>().await?;
+            let room_name_state_events = room.get_state_events_static::<RoomNameEventContent>().await?;
+            let room_topic_state_events = room.get_state_events_static::<RoomTopicEventContent>().await?;
+
+            let title = deserialize_sync_state_events_to_content(room_name_state_events)?.and_then(|e| e.name);
+            let topic = deserialize_sync_state_events_to_content(room_topic_state_events)?.map(|e| e.topic);
+            let category = deserialize_sync_state_events_to_content(category_state_events)?.and_then(|e| e.category);
+
+            let aliases = room.canonical_alias().into_iter().chain(room.alt_aliases().into_iter());
+
             let mut post_id = None;
-
-            let request = ruma::api::client::state::get_state_events::v3::Request::new(&room_id);
-            let response = self
-                .client
-                .send_request_as("@forum:corepaper.org".try_into()?, request)
-                .await?;
-
-            for raw_event in response.room_state {
-                match raw_event.get_field("type")? {
-                    Some("org.corepaper.morum.category") => {
-                        let event =
-                            raw_event.deserialize_as::<StateEvent<MorumCategoryEventContent>>()?;
-
-                        if let StateEvent::Original(event) = event {
-                            category = event.content.category;
-                        }
-                    }
-                    _ => {
-                        let event = raw_event.deserialize_as::<AnyStateEvent>()?;
-
-                        match event {
-                            AnyStateEvent::RoomName(StateEvent::Original(event)) => {
-                                title = event.content.name;
-                            }
-                            AnyStateEvent::RoomTopic(StateEvent::Original(event)) => {
-                                topic = Some(event.content.topic);
-                            }
-                            _ => (),
-                        }
-                    }
-                }
-            }
-
-            let request = ruma::api::client::room::aliases::v3::Request::new(&room_id);
-            let response = self
-                .client
-                .send_request_as("@forum:corepaper.org".try_into()?, request)
-                .await?;
-
-            for alias in response.aliases {
+            for alias in aliases {
                 let re = Regex::new(r"^#forum_post_(\d+):corepaper\.org$").expect("regex is valid");
                 let captures = re.captures(alias.as_str());
 
@@ -156,17 +140,17 @@ impl AppService {
             );
 
             if let (Some(title), Some(post_id)) = (title, post_id) {
-                rooms.push(Room {
+                ret.push(Room {
                     title,
                     category,
                     post_id,
                     topic,
-                    room_id: room_id.as_str().to_owned(),
+                    room_id: room.room_id().as_str().to_owned(),
                 })
             }
         }
 
-        Ok(rooms)
+        Ok(ret)
     }
 
     pub async fn set_category(
