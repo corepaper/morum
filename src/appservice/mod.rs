@@ -3,18 +3,24 @@ mod client;
 pub use self::client::Client;
 
 use crate::{Config, Error};
-use regex::Regex;
-use ruma::serde::Raw;
-use ruma::events::{SyncStateEvent, AnyStateEvent, EmptyStateKey, StaticEventContent, StateEvent, StateEventContent, RedactedStateEventContent, RedactContent, room::name::RoomNameEventContent, room::topic::RoomTopicEventContent};
-use ruma_macros::EventContent;
 use matrix_sdk::{config::SyncSettings, room::MessagesOptions};
-use serde::{Deserialize, de::DeserializeOwned, Serialize};
+use regex::Regex;
+use ruma::events::{
+    room::name::RoomNameEventContent, room::topic::RoomTopicEventContent, EmptyStateKey,
+    RedactContent, RedactedStateEventContent, StateEventContent, SyncStateEvent,
+};
+use ruma::serde::Raw;
+use ruma_macros::EventContent;
+use serde::{Deserialize, Serialize};
 use tokio::task;
 use tracing::debug;
 
-fn deserialize_sync_state_events_to_content<C>(events: Vec<Raw<SyncStateEvent<C>>>) -> Result<Option<C>, Error> where
+fn deserialize_sync_state_events_to_content<C>(
+    events: Vec<Raw<SyncStateEvent<C>>>,
+) -> Result<Option<C>, Error>
+where
     C: StateEventContent + RedactContent,
-    C::Redacted: RedactedStateEventContent<StateKey=C::StateKey>,
+    C::Redacted: RedactedStateEventContent<StateKey = C::StateKey>,
 {
     Ok(if let Some(event) = events.first() {
         let event = event.deserialize()?;
@@ -60,20 +66,24 @@ pub struct AppService {
 impl AppService {
     pub async fn new(homeserver_url: String, access_token: String) -> Result<Self, Error> {
         let client = self::client::Client::new(homeserver_url, access_token).await?;
-        let forum_user = client.user("forum".try_into().expect("forum is valid user id")).await?;
-        forum_user.sync_once(SyncSettings::default().full_state(true)).await?;
+        let forum_user = client
+            .user("forum".try_into().expect("forum is valid user id"))
+            .await?;
+        forum_user
+            .sync_once(SyncSettings::default().full_state(true))
+            .await?;
 
         let forum_user_sync = forum_user.clone();
 
         task::spawn(async move {
-            forum_user_sync.sync(SyncSettings::default().full_state(true)).await?;
+            forum_user_sync
+                .sync(SyncSettings::default().full_state(true))
+                .await?;
 
             Ok::<(), matrix_sdk::Error>(())
         });
 
-        Ok(Self {
-            client, forum_user,
-        })
+        Ok(Self { client, forum_user })
     }
 
     pub async fn ensure_registered(&self, localpart: &str) -> Result<(), Error> {
@@ -112,15 +122,27 @@ impl AppService {
         for room in joined_rooms {
             debug!("room id: {:?}", room.room_id());
 
-            let category_state_events = room.get_state_events_static::<MorumCategoryEventContent>().await?;
-            let room_name_state_events = room.get_state_events_static::<RoomNameEventContent>().await?;
-            let room_topic_state_events = room.get_state_events_static::<RoomTopicEventContent>().await?;
+            let category_state_events = room
+                .get_state_events_static::<MorumCategoryEventContent>()
+                .await?;
+            let room_name_state_events = room
+                .get_state_events_static::<RoomNameEventContent>()
+                .await?;
+            let room_topic_state_events = room
+                .get_state_events_static::<RoomTopicEventContent>()
+                .await?;
 
-            let title = deserialize_sync_state_events_to_content(room_name_state_events)?.and_then(|e| e.name);
-            let topic = deserialize_sync_state_events_to_content(room_topic_state_events)?.map(|e| e.topic);
-            let category = deserialize_sync_state_events_to_content(category_state_events)?.and_then(|e| e.category);
+            let title = deserialize_sync_state_events_to_content(room_name_state_events)?
+                .and_then(|e| e.name);
+            let topic =
+                deserialize_sync_state_events_to_content(room_topic_state_events)?.map(|e| e.topic);
+            let category = deserialize_sync_state_events_to_content(category_state_events)?
+                .and_then(|e| e.category);
 
-            let aliases = room.canonical_alias().into_iter().chain(room.alt_aliases().into_iter());
+            let aliases = room
+                .canonical_alias()
+                .into_iter()
+                .chain(room.alt_aliases().into_iter());
 
             let mut post_id = None;
             for alias in aliases {
@@ -158,11 +180,18 @@ impl AppService {
         room_alias_id: &str,
         category: Option<String>,
     ) -> Result<(), Error> {
-        let room_id = self.forum_user.resolve_room_alias(room_alias_id.try_into()?).await?.room_id;
+        let room_id = self
+            .forum_user
+            .resolve_room_alias(room_alias_id.try_into()?)
+            .await?
+            .room_id;
 
         let content = MorumCategoryEventContent { category };
 
-        let room = self.forum_user.get_joined_room(&room_id).ok_or(Error::UnknownPost)?;
+        let room = self
+            .forum_user
+            .get_joined_room(&room_id)
+            .ok_or(Error::UnknownPost)?;
         room.send_state_event(content).await?;
 
         Ok(())
@@ -175,8 +204,15 @@ impl AppService {
         };
         use ruma::events::{AnyMessageLikeEvent, AnyTimelineEvent, MessageLikeEvent};
 
-        let room_id = self.forum_user.resolve_room_alias(room_alias_id.try_into()?).await?.room_id;
-        let room = self.forum_user.get_joined_room(&room_id).ok_or(Error::UnknownPost)?;
+        let room_id = self
+            .forum_user
+            .resolve_room_alias(room_alias_id.try_into()?)
+            .await?
+            .room_id;
+        let room = self
+            .forum_user
+            .get_joined_room(&room_id)
+            .ok_or(Error::UnknownPost)?;
 
         let types_filter = ["m.room.message".to_string()];
         let mut messages_options = MessagesOptions::backward();
@@ -229,7 +265,11 @@ impl AppService {
         };
         use ruma::TransactionId;
 
-        let room_id = self.forum_user.resolve_room_alias(room_alias_id.try_into()?).await?.room_id;
+        let room_id = self
+            .forum_user
+            .resolve_room_alias(room_alias_id.try_into()?)
+            .await?
+            .room_id;
 
         self.ensure_registered(localpart).await?;
 
@@ -257,7 +297,9 @@ impl AppService {
         )?;
         let _response = self.client.send_request_as(&user_id, request).await?;
 
-        self.forum_user.sync_once(SyncSettings::default().full_state(true)).await?;
+        self.forum_user
+            .sync_once(SyncSettings::default().full_state(true))
+            .await?;
 
         Ok(())
     }

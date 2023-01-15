@@ -55,7 +55,9 @@ impl From<std::convert::Infallible> for Error {
     }
 }
 
-impl<R: std::error::Error + 'static> From<ruma::client::Error<matrix_sdk::reqwest::Error, R>> for Error {
+impl<R: std::error::Error + 'static> From<ruma::client::Error<matrix_sdk::reqwest::Error, R>>
+    for Error
+{
     fn from(err: ruma::client::Error<matrix_sdk::reqwest::Error, R>) -> Self {
         Self::RumaClient(Box::new(err))
     }

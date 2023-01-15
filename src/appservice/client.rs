@@ -1,10 +1,11 @@
 use crate::Error;
-use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken, client::{session::login, uiaa::UserIdentifier},};
-use ruma::client::{
-    HttpClient, HttpClientExt, ResponseError, ResponseResult,
+use matrix_sdk::Session;
+use ruma::api::{
+    client::{session::login, uiaa::UserIdentifier},
+    MatrixVersion, OutgoingRequest, SendAccessToken,
 };
-use ruma::{assign, UserId, DeviceId, OwnedDeviceId};
-use matrix_sdk::{config::RequestConfig, Session};
+use ruma::client::{HttpClient, HttpClientExt, ResponseError, ResponseResult};
+use ruma::{assign, UserId};
 use std::ops::Deref;
 
 pub type RumaHttpClient = ruma::client::http_client::Reqwest;
@@ -12,7 +13,6 @@ pub type RumaHttpClient = ruma::client::http_client::Reqwest;
 fn add_user_id_to_query<C: HttpClient + ?Sized, R: OutgoingRequest>(
     user_id: &UserId,
 ) -> impl FnOnce(&mut http::Request<C::RequestBody>) -> Result<(), ResponseError<C, R>> + '_ {
-    use assign::assign;
     use http::uri::Uri;
     use ruma::serde::urlencoded;
 
@@ -112,22 +112,17 @@ impl Client {
             .await
     }
 
-    pub async fn user(
-        &self,
-        localpart: &str
-    ) -> Result<UserClient, Error> {
-        let login_info =
-            login::v3::LoginInfo::ApplicationService(login::v3::ApplicationService::new(
-                UserIdentifier::UserIdOrLocalpart(localpart),
-            ));
+    pub async fn user(&self, localpart: &str) -> Result<UserClient, Error> {
+        let login_info = login::v3::LoginInfo::ApplicationService(
+            login::v3::ApplicationService::new(UserIdentifier::UserIdOrLocalpart(localpart)),
+        );
 
         let request = assign!(login::v3::Request::new(login_info), {
             device_id: Some("morum".into()),
             initial_device_display_name: None,
         });
 
-        let response =
-            self.send_request_force_auth(request).await?;
+        let response = self.send_request_force_auth(request).await?;
 
         let client = matrix_sdk::Client::builder()
             .homeserver_url(self.homeserver_url.clone())
