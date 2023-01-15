@@ -20,7 +20,7 @@ jsonwebtoken = "8"
 thiserror = "1"
 ruma = { version = "0.7", features = ["unstable-sanitize", "rand", "client", "client-reqwest-rustls-webpki-roots"] }
 ruma-macros = "0.10"
-matrix-sdk = { version = "0.6", default-features = false, features = ["e2e-encryption", "sled", "rustls-tls", "appservice"] }
+matrix-sdk = { version = "0.6", default-features = false, features = ["sled", "rustls-tls", "appservice"] }
 clap = { version = "4", features = ["derive"] }
 url = "2"
 hyper = "0.14"

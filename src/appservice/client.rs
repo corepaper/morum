@@ -1,9 +1,11 @@
 use crate::Error;
-use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken};
+use ruma::api::{MatrixVersion, OutgoingRequest, SendAccessToken, client::{session::login, uiaa::UserIdentifier},};
 use ruma::client::{
     HttpClient, HttpClientExt, ResponseError, ResponseResult,
 };
-use ruma::UserId;
+use ruma::{assign, UserId, DeviceId, OwnedDeviceId};
+use matrix_sdk::{config::RequestConfig, Session};
+use std::ops::Deref;
 
 pub type RumaHttpClient = ruma::client::http_client::Reqwest;
 
@@ -112,16 +114,47 @@ impl Client {
 
     pub async fn user(
         &self,
-        user_id: &UserId,
+        localpart: &str
     ) -> Result<UserClient, Error> {
+        let login_info =
+            login::v3::LoginInfo::ApplicationService(login::v3::ApplicationService::new(
+                UserIdentifier::UserIdOrLocalpart(localpart),
+            ));
+
+        let request = assign!(login::v3::Request::new(login_info), {
+            device_id: Some("morum".into()),
+            initial_device_display_name: None,
+        });
+
+        let response =
+            self.send_request_force_auth(request).await?;
+
         let client = matrix_sdk::Client::builder()
             .homeserver_url(self.homeserver_url.clone())
             .appservice_mode()
             .build()
             .await?;
 
+        let session = dbg!(Session {
+            access_token: response.access_token,
+            refresh_token: response.refresh_token,
+            user_id: response.user_id,
+            device_id: response.device_id,
+        });
+
+        client.restore_login(session).await?;
+
         Ok(UserClient(client))
     }
 }
 
+#[derive(Debug)]
 pub struct UserClient(matrix_sdk::Client);
+
+impl Deref for UserClient {
+    type Target = matrix_sdk::Client;
+
+    fn deref(&self) -> &matrix_sdk::Client {
+        &self.0
+    }
+}

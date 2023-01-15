@@ -18,10 +18,10 @@ pub enum Error {
     RumaClient(Box<dyn std::error::Error>),
     #[error("Matrix client build error")]
     MatrixClientBuild(#[from] matrix_sdk::ClientBuildError),
-    // #[error("Matrix error")]
-    // Matrix(#[from] matrix_sdk::Error),
-    // #[error("Matrix HTTP error")]
-    // MatrixHttp(#[from] matrix_sdk::HttpError),
+    #[error("Matrix error")]
+    Matrix(#[from] matrix_sdk::Error),
+    #[error("Matrix HTTP error")]
+    MatrixHttp(#[from] matrix_sdk::HttpError),
     #[error("Matrix Id parsing error")]
     MatrixIdParse(#[from] ruma::IdParseError),
     #[error("System time error")]

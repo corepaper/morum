@@ -6,7 +6,9 @@ use crate::{Config, Error};
 use regex::Regex;
 use ruma::events::{AnyStateEvent, EmptyStateKey, StateEvent};
 use ruma_macros::EventContent;
+use matrix_sdk::config::SyncSettings;
 use serde::{Deserialize, Serialize};
+use tokio::task;
 use tracing::debug;
 
 #[derive(Clone, Debug, Deserialize, Serialize, EventContent)]
@@ -32,13 +34,26 @@ pub struct Message {
 }
 
 #[derive(Debug)]
-pub struct AppService(self::client::Client);
+pub struct AppService {
+    client: self::client::Client,
+    forum_user: self::client::UserClient,
+}
 
 impl AppService {
     pub async fn new(homeserver_url: String, access_token: String) -> Result<Self, Error> {
-        Ok(Self(
-            self::client::Client::new(homeserver_url, access_token).await?,
-        ))
+        let client = self::client::Client::new(homeserver_url, access_token).await?;
+        let forum_user = client.user("forum".try_into().expect("forum is valid user id")).await?;
+        let forum_user_sync = forum_user.clone();
+
+        task::spawn(async move {
+            forum_user_sync.sync(SyncSettings::default().full_state(true)).await?;
+
+            Ok::<(), matrix_sdk::Error>(())
+        });
+
+        Ok(Self {
+            client, forum_user,
+        })
     }
 
     pub async fn ensure_registered(&self, localpart: &str) -> Result<(), Error> {
@@ -52,7 +67,7 @@ impl AppService {
         request.login_type = Some(&LoginType::ApplicationService);
         request.refresh_token = false;
 
-        let response = self.0.send_request_force_auth(request).await;
+        let response = self.client.send_request_force_auth(request).await;
 
         match response {
             Err(ruma::client::Error::FromHttpResponse(
@@ -74,7 +89,7 @@ impl AppService {
 
         let request = ruma::api::client::membership::joined_rooms::v3::Request::new();
         let response = self
-            .0
+            .client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
 
@@ -88,7 +103,7 @@ impl AppService {
 
             let request = ruma::api::client::state::get_state_events::v3::Request::new(&room_id);
             let response = self
-                .0
+                .client
                 .send_request_as("@forum:corepaper.org".try_into()?, request)
                 .await?;
 
@@ -120,7 +135,7 @@ impl AppService {
 
             let request = ruma::api::client::room::aliases::v3::Request::new(&room_id);
             let response = self
-                .0
+                .client
                 .send_request_as("@forum:corepaper.org".try_into()?, request)
                 .await?;
 
@@ -162,7 +177,7 @@ impl AppService {
         let request =
             ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
         let response = self
-            .0
+            .client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
 
@@ -176,7 +191,7 @@ impl AppService {
             &content,
         )?;
 
-        self.0
+        self.client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
         Ok(())
@@ -194,7 +209,7 @@ impl AppService {
         let request =
             ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
         let response = self
-            .0
+            .client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
 
@@ -205,7 +220,7 @@ impl AppService {
         let types_filter = ["m.room.message".to_string()];
         request.filter.types = Some(&types_filter);
         let response = self
-            .0
+            .client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
 
@@ -255,7 +270,7 @@ impl AppService {
         let request =
             ruma::api::client::alias::get_alias::v3::Request::new(room_alias_id.try_into()?);
         let response = self
-            .0
+            .client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
 
@@ -266,7 +281,7 @@ impl AppService {
         let user_id = ruma::UserId::parse(&format!("@{}:corepaper.org", localpart))?;
 
         let request = ruma::api::client::membership::join_room_by_id::v3::Request::new(&room_id);
-        let _response = self.0.send_request_as(&user_id, request).await?;
+        let _response = self.client.send_request_as(&user_id, request).await?;
 
         let mut html_body = String::new();
 
@@ -285,7 +300,7 @@ impl AppService {
             &transaction_id,
             &message,
         )?;
-        let _response = self.0.send_request_as(&user_id, request).await?;
+        let _response = self.client.send_request_as(&user_id, request).await?;
 
         Ok(())
     }
@@ -305,7 +320,7 @@ impl AppService {
         request.preset = Some(RoomPreset::PublicChat);
         request.is_direct = false;
 
-        self.0
+        self.client
             .send_request_as("@forum:corepaper.org".try_into()?, request)
             .await?;
         Ok(())
