@@ -1,10 +1,8 @@
 mod category_list;
-mod login;
 mod post;
 mod post_list;
 
 pub use crate::category_list::CategoryList;
-pub use crate::login::Login;
 pub use crate::post::Post;
 pub use crate::post_list::PostList;
 
@@ -14,15 +12,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, HydrateTo, Debug, Clone)]
 pub enum AnyComponent {}
 
-pub struct App {
-    pub logged_in: bool,
-}
+pub struct App {}
 
 #[render_from_multi]
 impl RenderMulti<AnyComponent> for App {
     fn render_multi(self, children: Markup) -> Markup {
         render_with_component!(AnyComponent, {
-            Nav { logged_in: self.logged_in },
+            Nav { },
             div {
                 class: "container m-3",
                 children,
@@ -32,9 +28,7 @@ impl RenderMulti<AnyComponent> for App {
     }
 }
 
-pub struct Nav {
-    pub logged_in: bool,
-}
+pub struct Nav {}
 
 impl Render<AnyComponent> for Nav {
     fn render(self) -> Markup {
@@ -46,7 +40,6 @@ impl Render<AnyComponent> for Nav {
                     a { href: "/", "morum" }
                 },
                 ul { class: "navbar-bav" },
-                NavLoginLink { logged_in: self.logged_in }
             }
         })
     }
@@ -64,42 +57,5 @@ impl Render<AnyComponent> for Footer {
                 a { href: "https://github.com/corepaper/morum", target: "_blank", "AGPL-3.0" }, ". ",
             }
         })
-    }
-}
-
-pub struct NavLoginLink {
-    pub logged_in: bool,
-}
-
-impl Render<AnyComponent> for NavLoginLink {
-    fn render(self) -> Markup {
-        if self.logged_in {
-            render_with_component!(AnyComponent, {
-                div {
-                    class: "login",
-                    span {
-                        class: "navbar-text",
-                        form {
-                            action: "/logout", method: "post",
-                            input { type_: "hidden", name: "action", value: "Logout" },
-                            button { class: "btn btn-link", type_: "submit", "Logout" },
-                        },
-                    }
-                }
-            })
-        } else {
-            render_with_component!(AnyComponent, {
-                div {
-                    class: "login",
-                    span {
-                        class: "navbar-text",
-                        form {
-                            action: "/login", method: "get",
-                            button { class: "btn btn-link", type_: "submit", "Login" },
-                        },
-                    }
-                }
-            })
-        }
     }
 }

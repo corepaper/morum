@@ -40,41 +40,6 @@ impl Render<AnyComponent> for Post {
                     }
                 }
             }).collect::<Vec<_>>(),
-
-            div {
-                class: "row",
-                NewComment { }
-            }
-        })
-    }
-}
-
-pub struct NewComment {}
-
-impl Render<AnyComponent> for NewComment {
-    fn render(self) -> Markup {
-        render_with_component!(AnyComponent, {
-            div {
-                class: "col-12",
-                form {
-                    method: "post",
-                    input {
-                        type_: "hidden",
-                        name: "action",
-                        value: "NewComment",
-                    },
-                    div {
-                        class: "form-group",
-                        label { for_: "new-comment", "New comment" },
-                        textarea { class: "form-control", id: "new-comment", name: "comment", rows: "5", },
-                    },
-                    input {
-                        class: "btn btn-primary pull-right",
-                        type_: "submit",
-                        value: "Submit",
-                    }
-                }
-            }
         })
     }
 }

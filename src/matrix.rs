@@ -1,8 +1,5 @@
-mod client;
-
-pub use self::client::Client;
-
 use crate::{Config, Error};
+use matrix_sdk::Client;
 use matrix_sdk::{config::SyncSettings, room::MessagesOptions};
 use regex::Regex;
 use ruma::events::{
@@ -13,7 +10,8 @@ use ruma::serde::Raw;
 use ruma_macros::EventContent;
 use serde::{Deserialize, Serialize};
 use tokio::task;
-use tracing::debug;
+use tracing::{debug, info};
+use url::Url;
 
 fn deserialize_sync_state_events_to_content<C>(
     events: Vec<Raw<SyncStateEvent<C>>>,
@@ -57,67 +55,50 @@ pub struct Message {
     pub sender: String,
 }
 
-#[derive(Debug)]
-pub struct AppService {
-    client: self::client::Client,
-    forum_user: self::client::UserClient,
+pub struct MatrixService {
+    client: Client,
 }
 
-impl AppService {
-    pub async fn new(homeserver_url: String, access_token: String) -> Result<Self, Error> {
-        let client = self::client::Client::new(homeserver_url, access_token).await?;
-        let forum_user = client
-            .user("forum".try_into().expect("forum is valid user id"))
+impl MatrixService {
+    pub async fn new(
+        homeserver_url: String,
+        username: String,
+        password: String,
+    ) -> Result<Self, Error> {
+        let client = Client::new(Url::parse(&homeserver_url)?).await?;
+
+        let login_res = client
+            .login_username(&username, &password)
+            .device_id("morum")
+            .initial_device_display_name("Morum")
+            .send()
             .await?;
-        forum_user
+
+        client
             .sync_once(SyncSettings::default().full_state(true))
             .await?;
 
-        let forum_user_sync = forum_user.clone();
-
+        let client_sync = client.clone();
         task::spawn(async move {
-            forum_user_sync
+            client_sync
                 .sync(SyncSettings::default().full_state(true))
                 .await?;
 
             Ok::<(), matrix_sdk::Error>(())
         });
 
-        Ok(Self { client, forum_user })
-    }
+        info!(
+            "Logged in as {}, got device_id {}",
+            username, login_res.device_id,
+        );
 
-    pub async fn ensure_registered(&self, localpart: &str) -> Result<(), Error> {
-        use ruma::api::client::account::register::{v3::Request, LoginType, RegistrationKind};
-
-        let mut request = Request::new();
-        request.username = Some(localpart);
-        request.device_id = Some("morum".try_into()?);
-        request.kind = RegistrationKind::User;
-        request.inhibit_login = true;
-        request.login_type = Some(&LoginType::ApplicationService);
-        request.refresh_token = false;
-
-        let response = self.client.send_request_force_auth(request).await;
-
-        match response {
-            Err(ruma::client::Error::FromHttpResponse(
-                ruma::api::error::FromHttpResponseError::Server(
-                    ruma::api::error::ServerError::Known(
-                        ruma::api::client::uiaa::UiaaResponse::MatrixError(
-                            ruma::api::client::Error { kind, .. },
-                        ),
-                    ),
-                ),
-            )) if kind == ruma::api::client::error::ErrorKind::UserInUse => Ok(()),
-            Err(err) => Err(err.into()),
-            Ok(_) => Ok(()),
-        }
+        Ok(Self { client })
     }
 
     pub async fn valid_rooms(&self) -> Result<Vec<Room>, Error> {
         let mut ret = Vec::new();
 
-        let joined_rooms = self.forum_user.joined_rooms();
+        let joined_rooms = self.client.joined_rooms();
 
         for room in joined_rooms {
             debug!("room id: {:?}", room.room_id());
@@ -175,28 +156,6 @@ impl AppService {
         Ok(ret)
     }
 
-    pub async fn set_category(
-        &self,
-        room_alias_id: &str,
-        category: Option<String>,
-    ) -> Result<(), Error> {
-        let room_id = self
-            .forum_user
-            .resolve_room_alias(room_alias_id.try_into()?)
-            .await?
-            .room_id;
-
-        let content = MorumCategoryEventContent { category };
-
-        let room = self
-            .forum_user
-            .get_joined_room(&room_id)
-            .ok_or(Error::UnknownPost)?;
-        room.send_state_event(content).await?;
-
-        Ok(())
-    }
-
     pub async fn messages(&self, room_alias_id: &str) -> Result<Vec<Message>, Error> {
         use ruma::events::room::message::{
             sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
@@ -205,12 +164,12 @@ impl AppService {
         use ruma::events::{AnyMessageLikeEvent, AnyTimelineEvent, MessageLikeEvent};
 
         let room_id = self
-            .forum_user
+            .client
             .resolve_room_alias(room_alias_id.try_into()?)
             .await?
             .room_id;
         let room = self
-            .forum_user
+            .client
             .get_joined_room(&room_id)
             .ok_or(Error::UnknownPost)?;
 
@@ -252,82 +211,11 @@ impl AppService {
 
         Ok(messages)
     }
-
-    pub async fn send_message(
-        &self,
-        localpart: &str,
-        room_alias_id: &str,
-        markdown: &str,
-    ) -> Result<(), Error> {
-        use ruma::events::room::message::{
-            sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
-            FormattedBody, MessageType, RoomMessageEventContent, TextMessageEventContent,
-        };
-        use ruma::TransactionId;
-
-        let room_id = self
-            .forum_user
-            .resolve_room_alias(room_alias_id.try_into()?)
-            .await?
-            .room_id;
-
-        self.ensure_registered(localpart).await?;
-
-        let user_id = ruma::UserId::parse(&format!("@{}:corepaper.org", localpart))?;
-
-        let request = ruma::api::client::membership::join_room_by_id::v3::Request::new(&room_id);
-        let _response = self.client.send_request_as(&user_id, request).await?;
-
-        let mut html_body = String::new();
-
-        pulldown_cmark::html::push_html(&mut html_body, pulldown_cmark::Parser::new(markdown));
-        let mut formatted = FormattedBody::html(html_body);
-        formatted.sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
-
-        let mut event_content = TextMessageEventContent::plain(markdown);
-        event_content.formatted = Some(formatted);
-
-        let message = RoomMessageEventContent::new(MessageType::Text(event_content));
-
-        let transaction_id = TransactionId::new();
-        let request = ruma::api::client::message::send_message_event::v3::Request::new(
-            &room_id,
-            &transaction_id,
-            &message,
-        )?;
-        let _response = self.client.send_request_as(&user_id, request).await?;
-
-        self.forum_user
-            .sync_once(SyncSettings::default().full_state(true))
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn create_room(
-        &self,
-        room_alias_localpart: &str,
-        name: &str,
-        topic: &str,
-    ) -> Result<(), Error> {
-        use ruma::api::client::room::create_room::v3::RoomPreset;
-
-        let mut request = ruma::api::client::room::create_room::v3::Request::new();
-        request.room_alias_name = Some(room_alias_localpart);
-        request.name = Some(name);
-        request.topic = Some(topic);
-        request.preset = Some(RoomPreset::PublicChat);
-        request.is_direct = false;
-
-        self.forum_user.create_room(request).await?;
-        Ok(())
-    }
 }
 
-pub async fn start(config: Config) -> Result<AppService, Error> {
-    let appservice = AppService::new(config.homeserver_url, config.homeserver_access_token).await?;
+pub async fn start(config: Config) -> Result<MatrixService, Error> {
+    let matrix =
+        MatrixService::new(config.homeserver_url, config.username, config.password).await?;
 
-    appservice.ensure_registered("forum").await?;
-
-    Ok(appservice)
+    Ok(matrix)
 }

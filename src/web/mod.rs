@@ -1,21 +1,18 @@
 mod category_list;
 mod extract;
-mod login;
 mod post;
 mod post_list;
 mod user_error;
 
 pub use self::user_error::UserError;
 
-use crate::{AppService, Config, Error};
-use axum::{extract::FromRef, middleware, routing, Router};
-use axum_extra::extract::cookie::Key as CookieKey;
+use crate::{Config, Error, MatrixService};
+use axum::{middleware, routing, Router};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
 
 pub struct Context {
     pub config: Config,
-    pub appservice: AppService,
-    pub cookie_key: CookieKey,
+    pub matrix: MatrixService,
 }
 
 #[derive(Clone)]
@@ -29,12 +26,6 @@ impl Deref for AppState {
     }
 }
 
-impl FromRef<AppState> for CookieKey {
-    fn from_ref(state: &AppState) -> Self {
-        state.cookie_key.clone()
-    }
-}
-
 east_build::include_trunk_assets! {
     Asset = Asset,
     Html = Html,
@@ -44,12 +35,8 @@ east_build::include_trunk_assets! {
     replace_body = "<!-- body -->",
 }
 
-pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> {
-    let context = Arc::new(Context {
-        config,
-        appservice,
-        cookie_key: CookieKey::generate(),
-    });
+pub async fn start(config: Config, matrix: MatrixService) -> Result<(), Error> {
+    let context = Arc::new(Context { config, matrix });
 
     let mut app: Router<AppState> = Router::new();
 
@@ -57,18 +44,10 @@ pub async fn start(config: Config, appservice: AppService) -> Result<(), Error> 
     app = app
         .route("/", routing::get(self::category_list::view_category_list))
         .route(
-            "/login",
-            routing::get(self::login::view_login).post(self::login::act_login),
-        )
-        .route("/logout", routing::post(self::login::act_logout))
-        .route(
             "/category/:id",
-            routing::get(self::post_list::view_post_list).post(self::post_list::act_post_list),
+            routing::get(self::post_list::view_post_list),
         )
-        .route(
-            "/post/:id",
-            routing::get(self::post::view_post).post(self::post::act_post),
-        );
+        .route("/post/:id", routing::get(self::post::view_post));
 
     let state = AppState(context);
 

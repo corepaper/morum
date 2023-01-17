@@ -38,51 +38,6 @@ impl Render<AnyComponent> for PostList {
                     },
                 },
             }).collect::<Vec<_>>(),
-
-            div {
-                class: "row",
-                NewPost { },
-            }
-        })
-    }
-}
-
-pub struct NewPost {}
-
-impl Render<AnyComponent> for NewPost {
-    fn render(self) -> Markup {
-        render_with_component!(AnyComponent, {
-            div {
-                class: "col-12",
-                form {
-                    method: "post",
-                    input {
-                        type_: "hidden",
-                        name: "action",
-                        value: "NewPost",
-                    },
-                    div {
-                        class: "form-group",
-                        label { for_: "title", "Title" },
-                        input { type_: "text", class: "form-control", id: "title", name: "title" },
-                    },
-                    div {
-                        class: "form-group",
-                        label { for_: "topic", "Topic" },
-                        input { type_: "text", class: "form-control", id: "topic", name: "topic" },
-                    },
-                    div {
-                        class: "form-group",
-                        label { for_: "content", "Content" },
-                        textarea { class: "form-control", id: "content", name: "markdown", rows: "5" },
-                    },
-                    input {
-                        class: "btn btn-primary pull-right",
-                        type_: "submit",
-                        value: "Submit",
-                    },
-                }
-            }
         })
     }
 }

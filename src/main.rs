@@ -14,9 +14,9 @@ async fn run() -> Result<(), Error> {
 
     let config: Config = serde_yaml::from_str(&fs::read_to_string(args.config)?)?;
 
-    let appservice = morum::appservice::start(config.clone()).await?;
+    let matrix = morum::matrix::start(config.clone()).await?;
 
-    morum::web::start(config, appservice).await?;
+    morum::web::start(config, matrix).await?;
 
     Ok(())
 }

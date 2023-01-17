@@ -1,50 +1,9 @@
-use super::AppState;
 use crate::Error;
 use async_trait::async_trait;
-use axum::{
-    body::HttpBody,
-    extract::{FromRequest, FromRequestParts},
-    http::request::Parts,
-    BoxError,
-};
-use axum_extra::extract::{cookie::Key as CookieKey, PrivateCookieJar};
+use axum::{body::HttpBody, extract::FromRequest, BoxError};
 use http::Request;
 use serde::de::DeserializeOwned;
-use std::{convert::Infallible, ops::Deref};
-
-pub struct User {
-    username: Option<String>,
-    jar: PrivateCookieJar,
-}
-
-#[async_trait]
-impl FromRequestParts<AppState> for User {
-    type Rejection = Infallible;
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        let jar = PrivateCookieJar::<CookieKey>::from_request_parts(parts, state).await?;
-        let username = jar.get("login").map(|cookie| cookie.value().to_owned());
-
-        Ok(User { username, jar })
-    }
-}
-
-impl User {
-    pub fn username(&self) -> Option<&str> {
-        self.username.as_deref()
-    }
-
-    pub fn logged_in(&self) -> bool {
-        self.username().is_some()
-    }
-
-    pub fn into_jar(self) -> PrivateCookieJar {
-        self.jar
-    }
-}
+use std::ops::Deref;
 
 pub use axum::extract::State;
 

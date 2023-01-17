@@ -1,4 +1,4 @@
-use super::{extract, Html};
+use super::Html;
 use crate::Error;
 use axum::{
     http::StatusCode,
@@ -14,28 +14,17 @@ use thiserror::Error;
 pub enum UserError {
     #[error("Internal error")]
     Internal,
-    #[error("Login credential is invalid")]
-    InvalidLoginCredential,
-    #[error("Already logged in")]
-    AlreadyLoggedIn,
-    #[error("Require login")]
-    RequireLogin,
 }
 
 impl UserError {
     pub fn status_code(&self) -> Option<StatusCode> {
         match self {
             Self::Internal => Some(StatusCode::INTERNAL_SERVER_ERROR),
-            Self::InvalidLoginCredential => Some(StatusCode::UNAUTHORIZED),
-            Self::AlreadyLoggedIn => None,
-            Self::RequireLogin => None,
         }
     }
 
     pub fn redirect(&self) -> Option<Redirect> {
         match self {
-            Self::AlreadyLoggedIn => Some(Redirect::to("/")),
-            Self::RequireLogin => Some(Redirect::to("/login")),
             _ => None,
         }
     }
@@ -44,10 +33,6 @@ impl UserError {
 impl From<Error> for UserError {
     fn from(err: Error) -> Self {
         match err {
-            Error::AlreadyLoggedIn => Self::AlreadyLoggedIn,
-            Error::InvalidLoginCredential => Self::InvalidLoginCredential,
-            Error::RequireLogin => Self::RequireLogin,
-
             _ => Self::Internal,
         }
     }
@@ -68,9 +53,9 @@ impl IntoResponse for Error {
     }
 }
 
-pub async fn handle_error<B>(user: extract::User, req: Request<B>, next: Next<B>) -> Response {
-    let host = dbg!(req.headers().get("Host"));
-    let referer = dbg!(req.headers().get("Referer"));
+pub async fn handle_error<B>(req: Request<B>, next: Next<B>) -> Response {
+    let host = req.headers().get("Host");
+    let referer = req.headers().get("Referer");
     let go_back = host
         .and_then(|host| host.to_str().ok())
         .and_then(|host| referer.map(|referer| (host, referer)))
@@ -100,14 +85,13 @@ pub async fn handle_error<B>(user: extract::User, req: Request<B>, next: Next<B>
             },
             body: render_with_component!(AnyComponent, {
                 App {
-                    logged_in: user.logged_in(),
                     p {
                         class: "error",
                         format!("{:?}", error),
 
                         br { },
 
-                        dbg!(go_back).map(|go_back| {
+                        go_back.map(|go_back| {
                             render! {
                                 a {
                                     class: "btn btn-primary",
