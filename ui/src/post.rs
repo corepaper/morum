@@ -40,6 +40,15 @@ impl Render<AnyComponent> for Post {
                     }
                 }
             }).collect::<Vec<_>>(),
+
+            div {
+                class: "row",
+                a {
+                    "Post a new comment",
+                    class: "btn btn-primary",
+                    href: format!("https://matrix.to/#/{}", self.post.room_id),
+                },
+            },
         })
     }
 }

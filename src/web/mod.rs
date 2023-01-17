@@ -45,7 +45,7 @@ pub async fn start(config: Config, matrix: MatrixService) -> Result<(), Error> {
         .route("/", routing::get(self::category_list::view_category_list))
         .route(
             "/category/:id",
-            routing::get(self::post_list::view_post_list),
+            routing::get(self::post_list::view_post_list).post(self::post_list::act_post_list),
         )
         .route("/post/:id", routing::get(self::post::view_post));
 

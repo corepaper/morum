@@ -8,7 +8,7 @@ use ruma::events::{
     RedactContent, RedactedStateEventContent, StateEventContent, SyncStateEvent,
 };
 use ruma::serde::Raw;
-use ruma::{OwnedRoomId, RoomAliasId, RoomId};
+use ruma::{OwnedRoomId, RoomAliasId, RoomId, RoomOrAliasId};
 use ruma_macros::EventContent;
 use serde::{Deserialize, Serialize};
 use tokio::task;
@@ -331,6 +331,36 @@ impl MatrixService {
         comments.reverse();
 
         Ok((post, comments))
+    }
+
+    pub async fn add_room_to_space(
+        &self,
+        category_room_alias: String,
+        new_room_alias_or_id: String,
+    ) -> Result<(), Error> {
+        use ruma::events::space::child::SpaceChildEventContent;
+
+        let category_room_id = self
+            .client
+            .resolve_room_alias(&RoomAliasId::parse(&category_room_alias)?)
+            .await?
+            .room_id;
+        let category_room = self
+            .client
+            .get_joined_room(&category_room_id)
+            .ok_or(Error::UnknownCategoryRoom)?;
+
+        let new_room_alias_or_id = RoomOrAliasId::parse(new_room_alias_or_id)?;
+        let new_room_id = self.client.join_room_by_id_or_alias(&new_room_alias_or_id, &[]).await?.room_id;
+
+        category_room.send_state_event_for_key(
+            &new_room_id,
+            SpaceChildEventContent::new(),
+        ).await?;
+
+        self.client.sync_once(SyncSettings::default().full_state(true)).await?;
+
+        Ok(())
     }
 }
 

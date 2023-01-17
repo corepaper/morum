@@ -37,6 +37,41 @@ impl Render<AnyComponent> for PostList {
                     },
                 },
             }).collect::<Vec<_>>(),
+
+            div {
+                class: "row",
+                NewPost { },
+            },
+        })
+    }
+}
+
+pub struct NewPost { }
+
+impl Render<AnyComponent> for NewPost {
+    fn render(self) -> Markup {
+        render_with_component!(AnyComponent, {
+            div {
+                class: "col-12",
+                form {
+                    method: "post",
+                    input {
+                        type_: "hidden",
+                        name: "action",
+                        value: "NewPost",
+                    },
+                    div {
+                        class: "form-group",
+                        label { for_: "title", "Matrix Room ID" },
+                        input { type_: "text", class: "form-control", id: "title", name: "room_id" },
+                    },
+                    input {
+                        class: "btn btn-primary pull-right",
+                        type_: "submit",
+                        value: "Add a new post",
+                    },
+                }
+            }
         })
     }
 }
