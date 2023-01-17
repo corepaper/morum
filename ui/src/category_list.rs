@@ -9,43 +9,28 @@ pub struct CategoryList {
 impl Render<AnyComponent> for CategoryList {
     fn render(self) -> Markup {
         render_with_component!(AnyComponent, {
-            self.categories
-                .into_iter()
-                .map(|c| CategoryListCategory { category: c })
-                .collect::<Vec<_>>()
-        })
-    }
-}
-
-pub struct CategoryListCategory {
-    pub category: types::Category,
-}
-
-impl Render<AnyComponent> for CategoryListCategory {
-    fn render(self) -> Markup {
-        render_with_component!(AnyComponent, {
             div {
                 class: "row mb-1",
                 h4 {
-                    self.category.title,
-                    small { self.category.topic },
+                    "Categories",
+                    small { "All categories" },
                 }
             },
             div {
                 class: "row mb-3",
-                self.category.subcategories.into_iter().map(|s| {
-                    CategoryListSubcategory { subcategory: s }
+                self.categories.into_iter().map(|s| {
+                    CategoryListItem { category: s }
                 }).collect::<Vec<_>>()
             }
         })
     }
 }
 
-pub struct CategoryListSubcategory {
-    pub subcategory: types::Subcategory,
+pub struct CategoryListItem {
+    pub category: types::Category,
 }
 
-impl Render<AnyComponent> for CategoryListSubcategory {
+impl Render<AnyComponent> for CategoryListItem {
     fn render(self) -> Markup {
         render_with_component!(AnyComponent, {
             div {
@@ -57,11 +42,11 @@ impl Render<AnyComponent> for CategoryListSubcategory {
                         h5 {
                             class: "card-title",
                             a {
-                                href: format!("/category/{}", self.subcategory.id.unwrap_or("uncategorized".to_string())),
-                                self.subcategory.title,
+                                href: format!("/category/{}", self.category.room_local_id),
+                                self.category.title,
                             }
                         },
-                        p { class: "card-text", self.subcategory.topic },
+                        p { class: "card-text", self.category.topic },
                     },
                 },
             }

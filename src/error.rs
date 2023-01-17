@@ -41,12 +41,18 @@ pub enum Error {
     UnknownCategory,
     #[error("Unknown post")]
     UnknownPost,
-    #[error("Blank title")]
-    BlankTitle,
-    #[error("Blank topic")]
-    BlankTopic,
-    #[error("Blank content")]
-    BlankContent,
+    #[error("Unknown post title")]
+    UnknownPostTitle,
+    #[error("Unknown category title")]
+    UnknownCategoryTitle,
+    #[error("Unknown category topic")]
+    UnknownCategoryTopic,
+    #[error("Unknown toplevel room")]
+    UnknownToplevelRoom,
+    #[error("Unknown category room")]
+    UnknownCategoryRoom,
+    #[error("Unknown category room")]
+    InvalidCategoryAlias,
 }
 
 impl From<std::convert::Infallible> for Error {

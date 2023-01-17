@@ -1,16 +1,18 @@
 use crate::{Config, Error};
 use matrix_sdk::Client;
 use matrix_sdk::{config::SyncSettings, room::MessagesOptions};
+use morum_base::types;
 use regex::Regex;
 use ruma::events::{
     room::name::RoomNameEventContent, room::topic::RoomTopicEventContent, EmptyStateKey,
     RedactContent, RedactedStateEventContent, StateEventContent, SyncStateEvent,
 };
 use ruma::serde::Raw;
+use ruma::{OwnedRoomId, RoomAliasId, RoomId};
 use ruma_macros::EventContent;
 use serde::{Deserialize, Serialize};
 use tokio::task;
-use tracing::{debug, info};
+use tracing::info;
 use url::Url;
 
 fn deserialize_sync_state_events_to_content<C>(
@@ -38,15 +40,6 @@ where
 pub struct MorumCategoryEventContent {
     #[serde(default, deserialize_with = "ruma::serde::empty_string_as_none")]
     pub category: Option<String>,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Room {
-    pub title: String,
-    pub topic: Option<String>,
-    pub category: Option<String>,
-    pub post_id: usize,
-    pub room_id: String,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -95,17 +88,40 @@ impl MatrixService {
         Ok(Self { client })
     }
 
-    pub async fn valid_rooms(&self) -> Result<Vec<Room>, Error> {
-        let mut ret = Vec::new();
+    pub async fn categories(&self) -> Result<Vec<types::Category>, Error> {
+        use ruma::events::space::child::SpaceChildEventContent;
 
-        let joined_rooms = self.client.joined_rooms();
+        let toplevel_room_id = self
+            .client
+            .resolve_room_alias("#forum:corepaper.org".try_into()?)
+            .await?
+            .room_id;
+        let toplevel_room = self
+            .client
+            .get_joined_room(&toplevel_room_id)
+            .ok_or(Error::UnknownToplevelRoom)?;
 
-        for room in joined_rooms {
-            debug!("room id: {:?}", room.room_id());
+        let child_state_events = toplevel_room
+            .get_state_events_static::<SpaceChildEventContent>()
+            .await?;
+        let children: Vec<OwnedRoomId> = child_state_events
+            .into_iter()
+            .filter_map(|event| {
+                if let Ok(event) = event.deserialize() {
+                    Some(event.state_key().clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-            let category_state_events = room
-                .get_state_events_static::<MorumCategoryEventContent>()
-                .await?;
+        let mut categories = Vec::new();
+        for child in children {
+            let room = self
+                .client
+                .get_joined_room(&child)
+                .ok_or(Error::UnknownCategoryRoom)?;
+
             let room_name_state_events = room
                 .get_state_events_static::<RoomNameEventContent>()
                 .await?;
@@ -114,64 +130,169 @@ impl MatrixService {
                 .await?;
 
             let title = deserialize_sync_state_events_to_content(room_name_state_events)?
-                .and_then(|e| e.name);
-            let topic =
-                deserialize_sync_state_events_to_content(room_topic_state_events)?.map(|e| e.topic);
-            let category = deserialize_sync_state_events_to_content(category_state_events)?
-                .and_then(|e| e.category);
+                .and_then(|e| e.name)
+                .ok_or(Error::UnknownCategoryTitle)?;
+            let topic = deserialize_sync_state_events_to_content(room_topic_state_events)?
+                .map(|e| e.topic)
+                .ok_or(Error::UnknownCategoryTopic)?;
 
-            let aliases = room
-                .canonical_alias()
-                .into_iter()
-                .chain(room.alt_aliases().into_iter());
+            let room_alias = room.canonical_alias().ok_or(Error::InvalidCategoryAlias)?;
+            let re = Regex::new(r"^#forum-(.+):corepaper\.org$").expect("regex is valid");
+            let captures = re.captures(room_alias.as_str());
 
-            let mut post_id = None;
-            for alias in aliases {
-                let re = Regex::new(r"^#forum_post_(\d+):corepaper\.org$").expect("regex is valid");
-                let captures = re.captures(alias.as_str());
+            let room_local_id = if let Some(captures) = captures {
+                captures
+                    .get(1)
+                    .ok_or(Error::InvalidCategoryAlias)?
+                    .as_str()
+                    .to_owned()
+            } else {
+                return Err(Error::InvalidCategoryAlias);
+            };
 
-                if let Some(captures) = captures {
-                    post_id = captures
-                        .get(1)
-                        .and_then(|s| s.as_str().parse::<usize>().ok());
-                }
-            }
-
-            debug!(
-                "title: {:?}, topic: {:?}, category: {:?}, post id: {:?}",
-                title, topic, category, post_id
-            );
-
-            if let (Some(title), Some(post_id)) = (title, post_id) {
-                ret.push(Room {
-                    title,
-                    category,
-                    post_id,
-                    topic,
-                    room_id: room.room_id().as_str().to_owned(),
-                })
-            }
+            categories.push(types::Category {
+                title,
+                topic,
+                room_local_id,
+            });
         }
 
-        Ok(ret)
+        Ok(categories)
     }
 
-    pub async fn messages(&self, room_alias_id: &str) -> Result<Vec<Message>, Error> {
+    pub async fn category_posts(
+        &self,
+        room_alias: String,
+    ) -> Result<(types::Category, Vec<types::Post>), Error> {
+        use ruma::events::space::child::SpaceChildEventContent;
+
+        let category_room_id = self
+            .client
+            .resolve_room_alias(&RoomAliasId::parse(&room_alias)?)
+            .await?
+            .room_id;
+        let category_room = self
+            .client
+            .get_joined_room(&category_room_id)
+            .ok_or(Error::UnknownCategoryRoom)?;
+
+        let category_room_name_state_events = category_room
+            .get_state_events_static::<RoomNameEventContent>()
+            .await?;
+        let category_room_topic_state_events = category_room
+            .get_state_events_static::<RoomTopicEventContent>()
+            .await?;
+
+        let category_title =
+            deserialize_sync_state_events_to_content(category_room_name_state_events)?
+                .and_then(|e| e.name)
+                .ok_or(Error::UnknownCategoryTitle)?;
+        let category_topic =
+            deserialize_sync_state_events_to_content(category_room_topic_state_events)?
+                .map(|e| e.topic)
+                .ok_or(Error::UnknownCategoryTopic)?;
+
+        let category_room_alias = category_room
+            .canonical_alias()
+            .ok_or(Error::InvalidCategoryAlias)?;
+        let re = Regex::new(r"^#forum-(.+):corepaper\.org$").expect("regex is valid");
+        let captures = re.captures(category_room_alias.as_str());
+
+        let category_room_local_id = if let Some(captures) = captures {
+            captures
+                .get(1)
+                .ok_or(Error::InvalidCategoryAlias)?
+                .as_str()
+                .to_owned()
+        } else {
+            return Err(Error::InvalidCategoryAlias);
+        };
+
+        let category = types::Category {
+            title: category_title,
+            topic: category_topic,
+            room_local_id: category_room_local_id,
+        };
+
+        let child_state_events = category_room
+            .get_state_events_static::<SpaceChildEventContent>()
+            .await?;
+        let children: Vec<OwnedRoomId> = child_state_events
+            .into_iter()
+            .filter_map(|event| {
+                if let Ok(event) = event.deserialize() {
+                    Some(event.state_key().clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        let mut posts = Vec::new();
+        for child in children {
+            let room = self
+                .client
+                .get_joined_room(&child)
+                .ok_or(Error::UnknownCategoryRoom)?;
+
+            let room_name_state_events = room
+                .get_state_events_static::<RoomNameEventContent>()
+                .await?;
+            let room_topic_state_events = room
+                .get_state_events_static::<RoomTopicEventContent>()
+                .await?;
+
+            let title = deserialize_sync_state_events_to_content(room_name_state_events)?
+                .and_then(|e| e.name)
+                .ok_or(Error::UnknownPostTitle)?;
+            let topic =
+                deserialize_sync_state_events_to_content(room_topic_state_events)?.map(|e| e.topic);
+
+            let room_id = room.room_id();
+
+            posts.push(types::Post {
+                title,
+                topic,
+                room_id: room_id.as_str().to_owned(),
+            });
+        }
+
+        Ok((category, posts))
+    }
+
+    pub async fn post_comments(
+        &self,
+        room_id: String,
+    ) -> Result<(types::Post, Vec<types::Comment>), Error> {
         use ruma::events::room::message::{
             sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
             MessageFormat, MessageType,
         };
         use ruma::events::{AnyMessageLikeEvent, AnyTimelineEvent, MessageLikeEvent};
 
-        let room_id = self
-            .client
-            .resolve_room_alias(room_alias_id.try_into()?)
-            .await?
-            .room_id;
         let room = self
             .client
-            .get_joined_room(&room_id)
+            .get_joined_room(&RoomId::parse(&room_id)?)
             .ok_or(Error::UnknownPost)?;
+
+        let room_name_state_events = room
+            .get_state_events_static::<RoomNameEventContent>()
+            .await?;
+        let room_topic_state_events = room
+            .get_state_events_static::<RoomTopicEventContent>()
+            .await?;
+
+        let title = deserialize_sync_state_events_to_content(room_name_state_events)?
+            .and_then(|e| e.name)
+            .ok_or(Error::UnknownPostTitle)?;
+        let topic =
+            deserialize_sync_state_events_to_content(room_topic_state_events)?.map(|e| e.topic);
+
+        let post = types::Post {
+            title,
+            topic,
+            room_id: room_id,
+        };
 
         let types_filter = ["m.room.message".to_string()];
         let mut messages_options = MessagesOptions::backward();
@@ -180,7 +301,7 @@ impl MatrixService {
 
         let messages_chunk = room.messages(messages_options).await?.chunk;
 
-        let mut messages = Vec::new();
+        let mut comments = Vec::new();
         for message_raw in messages_chunk {
             let message = message_raw.event.deserialize()?;
 
@@ -197,7 +318,7 @@ impl MatrixService {
                                 .sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
                             let html = message.body;
 
-                            messages.push(Message {
+                            comments.push(types::Comment {
                                 sender: sender.as_str().to_owned(),
                                 html,
                             });
@@ -207,9 +328,9 @@ impl MatrixService {
             }
         }
 
-        messages.reverse();
+        comments.reverse();
 
-        Ok(messages)
+        Ok((post, comments))
     }
 }
 

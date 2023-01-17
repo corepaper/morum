@@ -4,7 +4,7 @@ use east::{render, render_with_component};
 use morum_ui::{AnyComponent, App, CategoryList};
 
 pub async fn view_category_list(context: extract::State<AppState>) -> Result<Html, Error> {
-    let categories = context.config.categories.clone();
+    let categories = context.matrix.categories().await?;
 
     Ok(Html {
         header: render! {

@@ -4,7 +4,6 @@ use morum_base::types;
 
 pub struct PostList {
     pub category: types::Category,
-    pub subcategory: types::Subcategory,
     pub posts: Vec<types::Post>,
 }
 
@@ -14,8 +13,8 @@ impl Render<AnyComponent> for PostList {
             div {
                 class: "row mb-3",
                 h3 {
-                    self.category.title, " > ", self.subcategory.title,
-                    small { self.subcategory.topic },
+                    self.category.title,
+                    small { self.category.topic },
                 },
             },
 
@@ -27,7 +26,7 @@ impl Render<AnyComponent> for PostList {
                         h5 {
                             class: "card-title",
                             a {
-                                href: format!("/post/{}", post.id),
+                                href: format!("/post/{}", post.room_id),
                                 post.title
                             },
                         },
