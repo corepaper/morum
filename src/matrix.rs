@@ -8,7 +8,7 @@ use ruma::events::{
     RedactContent, RedactedStateEventContent, StateEventContent, SyncStateEvent,
 };
 use ruma::serde::Raw;
-use ruma::{OwnedRoomId, RoomAliasId, RoomId, RoomOrAliasId};
+use ruma::{assign, OwnedRoomId, RoomAliasId, RoomId, RoomOrAliasId};
 use ruma_macros::EventContent;
 use serde::{Deserialize, Serialize};
 use tokio::task;
@@ -351,14 +351,24 @@ impl MatrixService {
             .ok_or(Error::UnknownCategoryRoom)?;
 
         let new_room_alias_or_id = RoomOrAliasId::parse(new_room_alias_or_id)?;
-        let new_room_id = self.client.join_room_by_id_or_alias(&new_room_alias_or_id, &[]).await?.room_id;
+        let new_room_id = self
+            .client
+            .join_room_by_id_or_alias(&new_room_alias_or_id, &[])
+            .await?
+            .room_id;
 
-        category_room.send_state_event_for_key(
-            &new_room_id,
-            SpaceChildEventContent::new(),
-        ).await?;
+        category_room
+            .send_state_event_for_key(
+                &new_room_id,
+                assign!(SpaceChildEventContent::new(), {
+                    via: Some(vec!["corepaper.org".try_into()?]),
+                }),
+            )
+            .await?;
 
-        self.client.sync_once(SyncSettings::default().full_state(true)).await?;
+        self.client
+            .sync_once(SyncSettings::default().full_state(true))
+            .await?;
 
         Ok(())
     }
