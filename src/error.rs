@@ -51,21 +51,13 @@ pub enum Error {
     UnknownToplevelRoom,
     #[error("Unknown category room")]
     UnknownCategoryRoom,
-    #[error("Unknown category room")]
+    #[error("Unknown category alias")]
     InvalidCategoryAlias,
 }
 
 impl From<std::convert::Infallible> for Error {
     fn from(err: std::convert::Infallible) -> Error {
         match err {}
-    }
-}
-
-impl<R: std::error::Error + 'static> From<ruma::client::Error<matrix_sdk::reqwest::Error, R>>
-    for Error
-{
-    fn from(err: ruma::client::Error<matrix_sdk::reqwest::Error, R>) -> Self {
-        Self::RumaClient(Box::new(err))
     }
 }
 

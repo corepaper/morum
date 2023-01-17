@@ -18,9 +18,9 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 jsonwebtoken = "8"
 thiserror = "1"
-ruma = { version = "0.7", features = ["unstable-sanitize", "rand", "client", "client-reqwest-rustls-webpki-roots"] }
-ruma-macros = "0.10"
-matrix-sdk = { version = "0.6", default-features = false, features = ["sled", "rustls-tls", "appservice"] }
+ruma = { git = "https://github.com/ruma/ruma", rev = "b859d9c8b09ca6c2bb6d1c2788d133295579c090", features = ["unstable-sanitize", "rand"] }
+ruma-macros = { git = "https://github.com/ruma/ruma", rev = "b859d9c8b09ca6c2bb6d1c2788d133295579c090" }
+matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "8cc632ffd15da600b27dc776adb0ebc2c70f46f8", default-features = false, features = ["sled", "rustls-tls"] }
 clap = { version = "4", features = ["derive"] }
 url = "2"
 hyper = "0.14"

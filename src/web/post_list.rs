@@ -34,9 +34,7 @@ pub async fn view_post_list(
 #[derive(Deserialize)]
 #[serde(tag = "action")]
 pub enum PostListForm {
-    NewPost {
-        room_id: String,
-    },
+    NewPost { room_id: String },
 }
 
 pub async fn act_post_list(
@@ -47,15 +45,19 @@ pub async fn act_post_list(
     let category_room_local_id = path.0;
 
     match form.0 {
-        PostListForm::NewPost {
-            room_id,
-        } => {
-            context.matrix.add_room_to_space(
-                format!("#forum-{}:corepaper.org", category_room_local_id),
-                room_id,
-            ).await?;
+        PostListForm::NewPost { room_id } => {
+            context
+                .matrix
+                .add_room_to_space(
+                    format!("#forum-{}:corepaper.org", category_room_local_id),
+                    room_id,
+                )
+                .await?;
 
-            Ok(Redirect::to(&format!("/category/{}", category_room_local_id)))
+            Ok(Redirect::to(&format!(
+                "/category/{}",
+                category_room_local_id
+            )))
         }
     }
 }

@@ -5,12 +5,13 @@ use morum_base::types;
 use regex::Regex;
 use ruma::events::{
     room::name::RoomNameEventContent, room::topic::RoomTopicEventContent, EmptyStateKey,
-    RedactContent, RedactedStateEventContent, StateEventContent, SyncStateEvent,
+    OriginalStateEventContent, RedactContent, RedactedStateEventContent, StateEventContent,
+    SyncStateEvent,
 };
 use ruma::serde::Raw;
 use ruma::{OwnedRoomId, RoomAliasId, RoomId, RoomOrAliasId};
 use ruma_macros::EventContent;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::task;
 use tracing::info;
 use url::Url;
@@ -19,8 +20,8 @@ fn deserialize_sync_state_events_to_content<C>(
     events: Vec<Raw<SyncStateEvent<C>>>,
 ) -> Result<Option<C>, Error>
 where
-    C: StateEventContent + RedactContent,
-    C::Redacted: RedactedStateEventContent<StateKey = C::StateKey>,
+    C: StateEventContent + RedactContent + OriginalStateEventContent + DeserializeOwned,
+    C::Redacted: RedactedStateEventContent<StateKey = C::StateKey> + DeserializeOwned,
 {
     Ok(if let Some(event) = events.first() {
         let event = event.deserialize()?;
@@ -294,10 +295,10 @@ impl MatrixService {
             room_id: room_id,
         };
 
-        let types_filter = ["m.room.message".to_string()];
+        let types_filter = vec!["m.room.message".to_string()];
         let mut messages_options = MessagesOptions::backward();
         messages_options.limit = js_int::UInt::MAX;
-        messages_options.filter.types = Some(&types_filter);
+        messages_options.filter.types = Some(types_filter);
 
         let messages_chunk = room.messages(messages_options).await?.chunk;
 
@@ -351,14 +352,20 @@ impl MatrixService {
             .ok_or(Error::UnknownCategoryRoom)?;
 
         let new_room_alias_or_id = RoomOrAliasId::parse(new_room_alias_or_id)?;
-        let new_room_id = self.client.join_room_by_id_or_alias(&new_room_alias_or_id, &[]).await?.room_id;
+        let new_room = self
+            .client
+            .join_room_by_id_or_alias(&new_room_alias_or_id, &[])
+            .await?;
 
-        category_room.send_state_event_for_key(
-            &new_room_id,
-            SpaceChildEventContent::new(),
-        ).await?;
+        let mut space_child_event = SpaceChildEventContent::new();
+        space_child_event.via = Some(vec!["corepaper.org".try_into()?]);
+        category_room
+            .send_state_event_for_key(new_room.room_id(), space_child_event)
+            .await?;
 
-        self.client.sync_once(SyncSettings::default().full_state(true)).await?;
+        self.client
+            .sync_once(SyncSettings::default().full_state(true))
+            .await?;
 
         Ok(())
     }

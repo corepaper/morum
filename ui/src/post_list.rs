@@ -46,7 +46,7 @@ impl Render<AnyComponent> for PostList {
     }
 }
 
-pub struct NewPost { }
+pub struct NewPost {}
 
 impl Render<AnyComponent> for NewPost {
     fn render(self) -> Markup {

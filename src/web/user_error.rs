@@ -87,7 +87,10 @@ pub async fn handle_error<B>(req: Request<B>, next: Next<B>) -> Response {
                 App {
                     p {
                         class: "error",
-                        format!("{:?}", error),
+
+                        match error {
+                            UserError::Internal => "Internal error occured. Please try again later."
+                        },
 
                         br { },
 
