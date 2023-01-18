@@ -266,7 +266,7 @@ impl MatrixService {
     ) -> Result<(types::Post, Vec<types::Comment>), Error> {
         use ruma::events::room::message::{
             sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
-            MessageFormat, MessageType, FormattedBody,
+            MessageFormat, MessageType, FormattedBody, Relation,
         };
         use ruma::events::{AnyMessageLikeEvent, AnyTimelineEvent, MessageLikeEvent};
 
@@ -301,7 +301,7 @@ impl MatrixService {
 
         let messages_chunk = room.messages(messages_options).await?.chunk;
 
-        let mut comments = Vec::new();
+        let mut messages = Vec::new();
         for message_raw in messages_chunk {
             let message = message_raw.event.deserialize()?;
 
@@ -310,26 +310,37 @@ impl MatrixService {
             )) = message
             {
                 let sender = message.sender;
+                let event_id = message.event_id;
 
-                if let MessageType::Text(message) = message.content.msgtype {
-                    let mut message = message.formatted.unwrap_or_else(|| {
-                        let mut html_body = String::new();
-
-                        pulldown_cmark::html::push_html(&mut html_body, pulldown_cmark::Parser::new(&message.body));
-                        FormattedBody::html(html_body)
-                    });
-
-                    if message.format == MessageFormat::Html {
-                        message
-                            .sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
-                        let html = message.body;
-
-                        comments.push(types::Comment {
-                            sender: sender.as_str().to_owned(),
-                            html,
-                        });
+                if let MessageType::Text(msgtype) = message.content.msgtype {
+                    match message.content.relates_to {
+                        Some(Relation::Replacement(_)) => (),
+                        _ => {
+                            messages.push((event_id, sender, msgtype));
+                        },
                     }
                 }
+            }
+        }
+
+        let mut comments = Vec::new();
+        for (_, sender, message) in messages {
+            let mut message = message.formatted.unwrap_or_else(|| {
+                let mut html_body = String::new();
+
+                pulldown_cmark::html::push_html(&mut html_body, pulldown_cmark::Parser::new(&message.body));
+                FormattedBody::html(html_body)
+            });
+
+            if message.format == MessageFormat::Html {
+                message
+                    .sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
+                let html = message.body;
+
+                comments.push(types::Comment {
+                    sender: sender.as_str().to_owned(),
+                    html,
+                });
             }
         }
 
@@ -382,6 +393,8 @@ impl MatrixService {
 pub async fn start(config: Config) -> Result<MatrixService, Error> {
     let matrix =
         MatrixService::new(config.homeserver_url, config.username, config.password).await?;
+
+    matrix.post_comments("!AZvsRzlxPPMqKlMwMB:pacna.org".to_string()).await?;
 
     Ok(matrix)
 }
