@@ -18,7 +18,7 @@ pub async fn view_post_list(
 
     Ok(Html {
         header: render! {
-            title { "Post List | morum" },
+            title { format!("{} | morum", category.title) },
         },
         body: render_with_component!(AnyComponent, {
             App {

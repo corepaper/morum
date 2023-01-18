@@ -13,7 +13,7 @@ pub async fn view_post(
 
     Ok(Html {
         header: render! {
-            title { "Post | morum" },
+            title { format!("{} | morum", post.title) },
         },
         body: render_with_component!(AnyComponent, {
             App {
