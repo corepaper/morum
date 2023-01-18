@@ -266,7 +266,7 @@ impl MatrixService {
     ) -> Result<(types::Post, Vec<types::Comment>), Error> {
         use ruma::events::room::message::{
             sanitize::{HtmlSanitizerMode, RemoveReplyFallback},
-            MessageFormat, MessageType,
+            MessageFormat, MessageType, FormattedBody,
         };
         use ruma::events::{AnyMessageLikeEvent, AnyTimelineEvent, MessageLikeEvent};
 
@@ -312,17 +312,22 @@ impl MatrixService {
                 let sender = message.sender;
 
                 if let MessageType::Text(message) = message.content.msgtype {
-                    if let Some(mut message) = message.formatted {
-                        if message.format == MessageFormat::Html {
-                            message
-                                .sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
-                            let html = message.body;
+                    let mut message = message.formatted.unwrap_or_else(|| {
+                        let mut html_body = String::new();
 
-                            comments.push(types::Comment {
-                                sender: sender.as_str().to_owned(),
-                                html,
-                            });
-                        }
+                        pulldown_cmark::html::push_html(&mut html_body, pulldown_cmark::Parser::new(&message.body));
+                        FormattedBody::html(html_body)
+                    });
+
+                    if message.format == MessageFormat::Html {
+                        message
+                            .sanitize_html(HtmlSanitizerMode::Strict, RemoveReplyFallback::Yes);
+                        let html = message.body;
+
+                        comments.push(types::Comment {
+                            sender: sender.as_str().to_owned(),
+                            html,
+                        });
                     }
                 }
             }
